@@ -33,19 +33,23 @@ namespace AeroCore.Generics
             string path = getPath();
             foreach (var name in ev.Names)
                 if (name.IsEquivalentTo(path))
-                    Reload(); return;
+                {
+                    Reload(); 
+                    return;
+                }
         }
         public T GetAsset()
         {
             if (!isCached)
             {
+                string path = getPath();
                 try
                 {
-                    cached = helper.GameContent.Load<T>(getPath());
+                    cached = helper.GameContent.Load<T>(path);
                 }
                 catch (ContentLoadException e)
                 {
-                    monitor.Log($"Could not load asset at path '{getPath()}':\n{e.Message}", errorLevel);
+                    monitor.Log($"Could not load asset at path '{path}':\n{e.Message}", errorLevel);
                     cached = getDefault is not null ? getDefault() : default;
                 }
                 isCached = true;

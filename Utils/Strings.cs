@@ -2,7 +2,7 @@
 using StardewValley;
 using System;
 using System.Collections.Generic;
-using KnownColor = System.Drawing.KnownColor;
+using DColor = System.Drawing.Color;
 using System.Linq;
 using System.Text;
 using System.Globalization;
@@ -160,24 +160,32 @@ namespace AeroCore.Utils
             if (str is null || str.Length == 0)
                 return false;
 
-            if (Enum.TryParse(typeof(KnownColor), str.Trim(), out object parsed) && parsed is Color c)
+            if (str.ToLowerInvariant() == "black")
             {
-                color = c;
+                color = Color.Black;
                 return true;
             }
 
-            if (str[0] == '#')
+            DColor c = DColor.FromName(str);
+            if (c != DColor.Black)
             {
-                if (str.Length <= 3)
+                color = new(c.R, c.G, c.B, c.A);
+                return true;
+            }
+
+            ReadOnlySpan<char> s = str.AsSpan();
+            if (s[0] == '#')
+            {
+                if (s.Length <= 3)
                     return false;
 
-                if (str.Length > 6)
+                if (s.Length > 6)
                 {
-                    if (int.TryParse(str[1..3], NumberStyles.HexNumber, null, out int r) &&
-                        int.TryParse(str[3..5], NumberStyles.HexNumber, null, out int g) &&
-                        int.TryParse(str[5..7], NumberStyles.HexNumber, null, out int b))
+                    if (int.TryParse(s[1..3], NumberStyles.HexNumber, null, out int r) &&
+                        int.TryParse(s[3..5], NumberStyles.HexNumber, null, out int g) &&
+                        int.TryParse(s[5..7], NumberStyles.HexNumber, null, out int b))
                     {
-                        if (str.Length > 8 && int.TryParse(str[7..9], NumberStyles.HexNumber, null, out int a))
+                        if (s.Length > 8 && int.TryParse(s[7..9], NumberStyles.HexNumber, null, out int a))
                             color = new(r, g, b, a);
                         else
                             color = new(r, g, b);
@@ -185,11 +193,11 @@ namespace AeroCore.Utils
                     }
                 } else
                 {
-                    if (int.TryParse(str[1..2], NumberStyles.HexNumber, null, out int r) &&
-                        int.TryParse(str[2..3], NumberStyles.HexNumber, null, out int g) &&
-                        int.TryParse(str[3..4], NumberStyles.HexNumber, null, out int b))
+                    if (int.TryParse(s[1..2], NumberStyles.HexNumber, null, out int r) &&
+                        int.TryParse(s[2..3], NumberStyles.HexNumber, null, out int g) &&
+                        int.TryParse(s[3..4], NumberStyles.HexNumber, null, out int b))
                     {
-                        if (str.Length > 4 && int.TryParse(str[4..5], NumberStyles.HexNumber, null, out int a))
+                        if (s.Length > 4 && int.TryParse(s[4..5], NumberStyles.HexNumber, null, out int a))
                             color = new(r, g, b, a);
                         else
                             color = new(r, g, b);

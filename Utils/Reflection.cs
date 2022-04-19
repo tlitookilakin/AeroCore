@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using StardewModdingAPI;
+using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,9 @@ namespace AeroCore.Utils
     {
         private static MethodInfo addItemMethod = typeof(Reflection).MethodNamed("AddItem");
         private static MethodInfo addItemsMethod = typeof(Reflection).MethodNamed("AddItems");
+        internal static Multiplayer mp = null;
+        public static Multiplayer Multiplayer => mp;
+
         public static MethodInfo MethodNamed(this Type type, string name) => AccessTools.Method(type, name);
         public static MethodInfo MethodNamed(this Type type, string name, Type[] args) => AccessTools.Method(type, name, args);
         public static FieldInfo FieldNamed(this Type type, string name) => AccessTools.Field(type, name);

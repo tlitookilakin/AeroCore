@@ -14,6 +14,8 @@ namespace AeroCore
         internal static Harmony harmony;
         internal static string ModID;
 
+        private IReflectedField<Multiplayer> mp;
+
         public override void Entry(IModHelper helper)
         {
             Monitor.Log("Hello and welcome to the Enrichment Center!", LogLevel.Debug);
@@ -22,6 +24,10 @@ namespace AeroCore
             ModEntry.helper = Helper;
             harmony = new(ModManifest.UniqueID);
             ModID = ModManifest.UniqueID;
+
+            mp = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
+
+            helper.Events.GameLoop.SaveLoaded += (s, e) => Utils.Reflection.mp = mp.GetValue();
 
             harmony.PatchAll();
         }

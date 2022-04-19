@@ -97,13 +97,11 @@ namespace AeroCore.Utils
             bool escaped = false;
             char c;
             int last = 0;
-            int current = 1;
             for(int i = 0; i < s.Length; i++)
             {
                 if (escaped)
                 {
                     escaped = false;
-                    current++;
                     continue;
                 }
                 c = s[i];
@@ -129,24 +127,35 @@ namespace AeroCore.Utils
                     default:
                         if (c == delim && !dquote && !squote)
                         {
-                            if (!RemoveEmpty || current - last > 0)
-                                yield return s[last..current].ToString();
-                            last = current + 1;
+                            if (!RemoveEmpty || i - last > 0)
+                                yield return s[last..i].ToString();
+                            last = i + 1;
                             continue;
                         }
                         break;
                 }
-                current++;
             }
-            if (current < s.Length)
-                yield return s[current..].ToString();
-            else
-                yield break;
+            if (last < s.Length)
+                yield return s[last..].ToString();
+            yield break;
         }
-        public static List<string> SafeSplitList(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false) => 
-            s.SafeSplit(delim, RemoveEmpty).ToList();
         public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
-        public static List<string> SafeSplitList(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplitList(delim, RemoveEmpty);
+        public static IEnumerable<string> Split(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
+        {
+            int last = 0;
+            for(int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == delim)
+                {
+                    if(!RemoveEmpty || i - last > 0)
+                        yield return s[last..i].ToString();
+                    last = i + 1;
+                }
+            }
+            if (last < s.Length)
+                yield return s[last..].ToString();
+            yield break;
+        }
 
         /// <summary>Parses a color from a string. Valid formats: #rgb #rgba #rrggbb #rrggbbaa r,g,b r,g,b,a</summary>
         /// <param name="str">The string to parse from</param>

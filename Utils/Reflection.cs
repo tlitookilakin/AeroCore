@@ -13,6 +13,7 @@ namespace AeroCore.Utils
     public static class Reflection
     {
         private static MethodInfo addItemMethod = typeof(Reflection).MethodNamed("AddItem");
+        private static MethodInfo addItemsMethod = typeof(Reflection).MethodNamed("AddItems");
         public static MethodInfo MethodNamed(this Type type, string name) => AccessTools.Method(type, name);
         public static MethodInfo MethodNamed(this Type type, string name, Type[] args) => AccessTools.Method(type, name, args);
         public static FieldInfo FieldNamed(this Type type, string name) => AccessTools.Field(type, name);
@@ -38,8 +39,23 @@ namespace AeroCore.Utils
         public static void AddItem<k, v>(IModContentHelper helper, IAssetData asset, k key, string path)
         {
             var model = asset.AsDictionary<k, v>().Data;
-            var entry = helper.Load<v>($"assets/{path}");
+            var entry = helper.Load<v>(path);
             model.Add(key, entry);
+        }
+        public static bool AddDictionaryEntries<T>(IModContentHelper helper, IAssetData asset, string path)
+        {
+            if (!typeof(T).IsGenericType || typeof(T).GetGenericTypeDefinition() != typeof(Dictionary<,>))
+                return false;
+
+            Type[] types = typeof(T).GetGenericArguments();
+            addItemsMethod.MakeGenericMethod(types).Invoke(null, new object[] { helper, asset, path });
+            return true;
+        }
+        public static void AddItems<k, v>(IModContentHelper helper, IAssetData asset, string path)
+        {
+            var model = asset.AsDictionary<k, v>().Data;
+            foreach ((k key, v val) in helper.Load<Dictionary<k, v>>(path))
+                model[key] = val;
         }
     }
 }

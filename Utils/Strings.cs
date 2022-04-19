@@ -138,7 +138,10 @@ namespace AeroCore.Utils
                 }
                 current++;
             }
-            yield return s[current..].ToString();
+            if (current < s.Length)
+                yield return s[current..].ToString();
+            else
+                yield break;
         }
         public static List<string> SafeSplitList(this ReadOnlySpan<char> s, char delim)
         {

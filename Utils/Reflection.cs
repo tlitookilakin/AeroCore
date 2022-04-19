@@ -24,12 +24,14 @@ namespace AeroCore.Utils
 
             return code;
         }
-        public static bool AddDictionaryEntry<T>(IModContentHelper helper, IAssetData asset, object key, string path)
+        public static bool AddDictionaryEntry(IModContentHelper helper, IAssetData asset, object key, string path)
         {
-            if (!typeof(T).IsGenericType || typeof(T).GetGenericTypeDefinition() != typeof(Dictionary<,>))
+            Type T = asset.DataType;
+
+            if (!T.IsGenericType || T.GetGenericTypeDefinition() != typeof(Dictionary<,>))
                 return false;
 
-            Type[] types = typeof(T).GetGenericArguments();
+            Type[] types = T.GetGenericArguments();
             if(key.GetType().IsAssignableTo(types[0]))
                 return false;
 
@@ -42,12 +44,14 @@ namespace AeroCore.Utils
             var entry = helper.Load<v>(path);
             model.Add(key, entry);
         }
-        public static bool AddDictionaryEntries<T>(IModContentHelper helper, IAssetData asset, string path)
+        public static bool AddDictionaryEntries(IModContentHelper helper, IAssetData asset, string path)
         {
-            if (!typeof(T).IsGenericType || typeof(T).GetGenericTypeDefinition() != typeof(Dictionary<,>))
+            Type T = asset.DataType;
+
+            if (!T.IsGenericType || T.GetGenericTypeDefinition() != typeof(Dictionary<,>))
                 return false;
 
-            Type[] types = typeof(T).GetGenericArguments();
+            Type[] types = T.GetGenericArguments();
             addItemsMethod.MakeGenericMethod(types).Invoke(null, new object[] { helper, asset, path });
             return true;
         }

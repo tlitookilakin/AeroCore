@@ -4,6 +4,8 @@ using StardewModdingAPI;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using AeroCore.Utils;
+using System.Linq;
 
 namespace AeroCore
 {
@@ -190,9 +192,8 @@ namespace AeroCore
                         (var tmarkers, var transformer) = (ValueTuple<IList<CodeInstruction>, Transformer>)item.arg;
                         foreach (var code in matchSequence(tmarkers))
                             yield return code;
-                        foreach (var code in transformer(cursor.GetBuffer()))
+                        foreach (var code in transformer(cursor.Take(tmarkers.Count).ToArray()))
                             yield return code;
-                        cursor.Clear();
                         break;
                 }
 

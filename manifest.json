@@ -5,6 +5,6 @@
   "Description": "A utility coremod",
   "UniqueID": "tlitookilakin.AeroCore",
   "EntryDll": "AeroCore.dll",
-  "MinimumApiVersion": "3.13",
+  "MinimumApiVersion": "3.14",
   "UpdateKeys": [ "Nexus:" ]
 }

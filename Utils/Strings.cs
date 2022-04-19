@@ -97,6 +97,9 @@ namespace AeroCore.Utils
             bool escaped = false;
             char c;
             int last = 0;
+            var prev = new char[s.Length];
+            int skip = 0;
+            int skipped = 0;
             for(int i = 0; i < s.Length; i++)
             {
                 if (escaped)
@@ -111,32 +114,43 @@ namespace AeroCore.Utils
                         if (!squote)
                         {
                             dquote = !dquote;
-                            continue;
+                            s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
+                            skipped++;
+                            skip = i + 1;
                         }
                         break;
                     case '\'':
                         if (!dquote)
                         {
                             squote = !squote;
-                            continue;
+                            skipped++;
+                            s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
+                            skipped++;
+                            skip = i + 1;
                         }
                         break;
                     case '\\':
                         escaped = true;
-                        continue;
+                        s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
+                        skipped++;
+                        skip = i + 1;
+                        break;
                     default:
                         if (c == delim && !dquote && !squote)
                         {
-                            if (!RemoveEmpty || i - last > 0)
-                                yield return s[last..i].ToString();
+                            s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
+                            if (!RemoveEmpty || i - last - skipped > 0)
+                                yield return prev[last..(i - skipped)].ToString();
                             last = i + 1;
-                            continue;
+                            skip = last;
+                            skipped = 0;
                         }
                         break;
                 }
             }
-            if (last < s.Length)
-                yield return s[last..].ToString();
+            s[skip..].CopyTo(prev.AsSpan(skip - skipped));
+            if (s.Length - last - skipped > 0)
+                yield return prev[last..^skipped].ToString();
             yield break;
         }
         public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);

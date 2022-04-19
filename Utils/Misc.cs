@@ -48,5 +48,12 @@ namespace AeroCore.Utils
                     "Data/Festivals/" + Game1.currentSeason + Game1.dayOfMonth)["conditions"].Split('/')[1].Split(' ')[0],
                     out int time) || time <= Game1.timeOfDay;
         }
+        public static ReadOnlySpan<T> Concat<T>(this ReadOnlySpan<T> s1, ReadOnlySpan<T> s2)
+        {
+            var array = new T[s1.Length + s2.Length];
+            s1.CopyTo(array);
+            s2.CopyTo(array.AsSpan(s1.Length));
+            return new(array);
+        }
     }
 }

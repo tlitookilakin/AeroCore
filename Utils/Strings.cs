@@ -143,15 +143,10 @@ namespace AeroCore.Utils
             else
                 yield break;
         }
-        public static List<string> SafeSplitList(this ReadOnlySpan<char> s, char delim)
-        {
-            var list = new List<string>();
-            foreach (var item in SafeSplit(s, delim))
-            {
-                list.Add(item);
-            }
-            return list;
-        }
+        public static List<string> SafeSplitList(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false) => 
+            (from item in s.SafeSplit(delim, RemoveEmpty) select item.ToString()).ToList();
+        public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
+        public static List<string> SafeSplitList(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplitList(delim, RemoveEmpty);
 
         /// <summary>Parses a color from a string. Valid formats: #rgb #rgba #rrggbb #rrggbbaa r,g,b r,g,b,a</summary>
         /// <param name="str">The string to parse from</param>

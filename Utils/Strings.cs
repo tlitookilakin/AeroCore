@@ -90,19 +90,20 @@ namespace AeroCore.Utils
             int count = PathUtilities.GetSegments(path).Length;
             return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString()).Skip(count));
         }
-        public static IEnumerable<string> SafeSplit(this ReadOnlySpan<char> s, char delim)
+        public static IEnumerable<string> SafeSplit(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
         {
             bool dquote = false;
             bool squote = false;
             bool escaped = false;
             char c;
-            StringBuilder sb = new();
+            int last = 0;
+            int current = 1;
             for(int i = 0; i < s.Length; i++)
             {
                 if (escaped)
                 {
                     escaped = false;
-                    sb.Append(s[i]);
+                    current++;
                     continue;
                 }
                 c = s[i];
@@ -128,21 +129,21 @@ namespace AeroCore.Utils
                     default:
                         if (c == delim && !dquote && !squote)
                         {
-                            if (sb.Length > 0)
-                                yield return sb.ToString();
-                            sb.Clear();
+                            if (!RemoveEmpty || current - last > 0)
+                                yield return s[last..current].ToString();
+                            last = current + 1;
                             continue;
                         }
                         break;
                 }
-                sb.Append(c);
+                current++;
             }
-            yield return sb.ToString();
+            yield return s[current..].ToString();
         }
         public static List<string> SafeSplitList(this ReadOnlySpan<char> s, char delim)
         {
             var list = new List<string>();
-            foreach (string item in SafeSplit(s, delim))
+            foreach (var item in SafeSplit(s, delim))
             {
                 list.Add(item);
             }

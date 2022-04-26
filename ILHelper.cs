@@ -180,33 +180,33 @@ namespace AeroCore
             actionIndex = 0;
             hasErrored = false;
             labels.Clear();
-            foreach (var item in actionQueue)
+            foreach (var (action, arg) in actionQueue)
             {
                 int count = 0;
-                switch (item.action)
+                switch (action)
                 {
                     case ActionType.Skip:
-                        count = (int)item.arg;
+                        count = (int)arg;
                         for (int c = 0; c < count && cursor.MoveNext(); c++)
                             yield return cursor.Current;
                         break;
                     case ActionType.SkipTo:
-                        foreach (var code in matchSequence((IList<CodeInstruction>)item.arg))
+                        foreach (var code in matchSequence((IList<CodeInstruction>)arg))
                             yield return code;
                         break;
                     case ActionType.Add:
-                        foreach (var code in (IList<CodeInstruction>)item.arg)
+                        foreach (var code in (IList<CodeInstruction>)arg)
                             yield return code;
                         break;
                     case ActionType.RemoveCount:
-                        count = (int)item.arg;
+                        count = (int)arg;
                         for (int c = 0; c < count && cursor.MoveNext(); c++){};
                         break;
                     case ActionType.RemoveTo:
-                        foreach (var code in matchSequence((IList<CodeInstruction>)item.arg)){}
+                        foreach (var code in matchSequence((IList<CodeInstruction>)arg)){}
                         break;
                     case ActionType.Collect:
-                        var markers = (IList<CodeInstruction>)item.arg;
+                        var markers = (IList<CodeInstruction>)arg;
                         foreach (var code in matchSequence(markers))
                             yield return code;
                         collected = cursor.GetBuffer();
@@ -216,14 +216,14 @@ namespace AeroCore
                             yield return cursor.Current;
                         break;
                     case ActionType.Transform:
-                        (var tmarkers, var transformer) = (ValueTuple<IList<CodeInstruction>, Transformer>)item.arg;
+                        (var tmarkers, var transformer) = (ValueTuple<IList<CodeInstruction>, Transformer>)arg;
                         foreach (var code in matchSequence(tmarkers))
                             yield return code;
                         foreach (var code in transformer(cursor.Take(tmarkers.Count).ToArray()))
                             yield return code;
                         break;
                     case ActionType.AddLabel:
-                        string lname = (string)item.arg;
+                        string lname = (string)arg;
                         if (labels.TryGetValue(lname, out var label))
                             cursor.Current.labels.Add(label);
                         else

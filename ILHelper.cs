@@ -283,15 +283,15 @@ namespace AeroCore
         }
 
         /// <summary>Throughly compare the operands of two CodeInstructions. Use (int, Type) tuples for locals.</summary>
-        /// <param name="op1">Specified operand</param>
-        /// <param name="op2">Source operand</param>
+        /// <param name="op1">Source operand</param>
+        /// <param name="op2">Specified operand</param>
         /// <returns>True if matching, otherwise false</returns>
         public static bool CompareOperands(object op1, object op2)
         {
             if (op1 == null || op1.Equals(op2))
                 return true;
 
-            if (op2 is sbyte sb && Convert.ToInt32(sb).Equals(op1))
+            if (op1 is sbyte sb && Convert.ToInt32(sb).Equals(op2))
                 return true;
 
             if (op1 is LocalBuilder oper1 && op2 is ValueTuple<int, Type> oper2)

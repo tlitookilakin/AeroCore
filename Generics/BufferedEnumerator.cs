@@ -37,6 +37,11 @@ namespace AeroCore.Generics
         }
         public IList<T> GetBuffer() => buffer.ToArray();
         public void Push(T item) => buffer.Enqueue(item);
+        public void Append(IList<T> items)
+        {
+            for(int i = 0; i < items.Count; i++)
+                buffer.Enqueue(items[i]);
+        }
         public void Clear() => buffer.Clear();
     }
 }

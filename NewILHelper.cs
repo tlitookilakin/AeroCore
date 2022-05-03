@@ -14,11 +14,12 @@ namespace AeroCore
     public class NewILHelper : IEnumerable<CodeInstruction>
     {
         #region head
-        private enum ActionType {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Collect, Transform, AddLabel};
+        public delegate IList<CodeInstruction> Transformer(IEnumerable<CodeInstruction> instructions);
         private readonly List<(int action, object arg)> actionQueue = new();
         private readonly string name;
         private readonly IMonitor monitor;
         public ILGenerator generator;
+        private IEnumerable<CodeInstruction> instructions;
 
         public IEnumerator<CodeInstruction> GetEnumerator() => new ILEnumerator(this);
         IEnumerator IEnumerable.GetEnumerator() => new ILEnumerator(this);
@@ -27,6 +28,12 @@ namespace AeroCore
         {
             monitor = Monitor;
             name = Name;
+        }
+        public NewILHelper Run(IEnumerable<CodeInstruction> instructions, ILGenerator Generator)
+        {
+            this.instructions = instructions;
+            generator = Generator;
+            return this;
         }
         /// <summary>Throughly compare the operands of two CodeInstructions. Use (int, Type) tuples for locals.</summary>
         /// <param name="op1">Source operand</param>
@@ -46,12 +53,16 @@ namespace AeroCore
             }
             return false;
         }
+        public static bool CompareInstructions(CodeInstruction src, CodeInstruction def)
+        {
+            return def is null || (src.opcode == def.opcode && CompareOperands(src.operand, def.operand));
+        }
 
         #endregion head
         #region queue
         public NewILHelper Finish()
         {
-            actionQueue.Add(((int)ActionType.Finish, null));
+            actionQueue.Add((0, null));
             return this;
         }
         #endregion queue
@@ -60,10 +71,13 @@ namespace AeroCore
         {
             private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
             private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add};
+            //TODO: collect, transform, addlabel
 
             private bool disposedValue;
-            private BufferedEnumerator<CodeInstruction> source;
+            private readonly BufferedEnumerator<CodeInstruction> source;
             private readonly NewILHelper owner;
+            private readonly ILGenerator gen;
+            private readonly Dictionary<string, Label> labels = new();
 
             private CodeInstruction current;
             private Mode mode;
@@ -74,6 +88,9 @@ namespace AeroCore
             private int marker = 0;
             private IList<CodeInstruction> anchors;
             private CodeInstruction[] matched;
+            private List<CodeInstruction> collected;
+            private string[] labelsToAdd;
+            private Transformer tf;
 
             public CodeInstruction Current => current;
             object IEnumerator.Current => current;
@@ -81,6 +98,8 @@ namespace AeroCore
             public ILEnumerator(NewILHelper Owner)
             {
                 owner = Owner;
+                gen = owner.generator;
+                source = new(Owner.instructions.GetEnumerator());
             }
 
             public bool MoveNext()
@@ -90,17 +109,19 @@ namespace AeroCore
                     if (modeIndex >= owner.actionQueue.Count)
                         return false;
                     nextMode = false;
-                    var m = owner.actionQueue[modeIndex];
-                    mode = modes[m.action];
+                    var (action, arg) = owner.actionQueue[modeIndex];
+                    mode = modes[action];
                     marker = 0;
 
-                    switch (m.action)
+                    switch (action)
                     {
-                        case 1 or 3: marker = (int)m.arg; break;
+                        case 1 or 3: marker = (int)arg; break;
                         case 2 or 4:
-                            anchors = (IList<CodeInstruction>)m.arg;
+                            anchors = (IList<CodeInstruction>)arg;
                             matched = new CodeInstruction[anchors.Count];
+                            marker = 0;
                             break;
+                        case 5: anchors = (IList<CodeInstruction>)arg; break;
                     }
 
                     modeIndex++;
@@ -124,24 +145,29 @@ namespace AeroCore
             }
             private bool matchSequence()
             {
-                var cached = source.Current;
-                while(marker < anchors.Count)
+                if (!CompareInstructions(source.Current, anchors[0]))
+                    return false;
+
+                while(marker < anchors.Count && source.MoveNext())
                 {
-                    var s = anchors[marker];
-                    var code = source.Current; 
-                    matched[marker] = code;
+                    matched[marker] = source.Current;
                     marker++;
-                    if (!source.MoveNext() || (s is not null && (code.opcode != s.opcode || !CompareOperands(code.operand, s.operand))))
+                    if (!CompareInstructions(source.Current, anchors[marker]))
                     {
                         flushMatched();
                         source.MoveNext();
+                        marker = 0;
                         return false;
                     }
                 }
-                source.Push(cached);
+                if (marker < anchors.Count)
+                {
+                    owner.monitor.Log($"Could not find marker instructions for '{owner.name}':{modeIndex}", LogLevel.Error);
+                    hasErrored = true;
+                }
                 flushMatched();
                 source.MoveNext();
-                return true;
+                return marker >= anchors.Count;
             }
             private void flushMatched()
             {
@@ -150,6 +176,7 @@ namespace AeroCore
                     source.Push(matched[^marker]);
                     marker--;
                 }
+                source.Push(source.Current);
             }
             #region Modes
             private static bool Finish(ILEnumerator inst, ref CodeInstruction result)
@@ -182,7 +209,8 @@ namespace AeroCore
             }
             private static bool Remove(ILEnumerator inst, ref CodeInstruction result)
             {
-                while (inst.marker > 0 && inst.source.MoveNext()) { }
+                while (inst.marker > 0 && inst.source.MoveNext())
+                    inst.marker--;
                 result = inst.source.Current;
                 return true;
             }
@@ -195,6 +223,9 @@ namespace AeroCore
                 {
                     inst.owner.monitor.Log($"Could not find marker instructions for '{inst.owner.name}':{inst.modeIndex}", LogLevel.Error);
                     inst.hasErrored = true;
+                } else
+                {
+                    result = inst.source.Current;
                 }
                 return true;
             }
@@ -202,6 +233,11 @@ namespace AeroCore
             {
                 foreach(var item in inst.anchors)
                     inst.source.Push(item);
+                return true;
+            }
+            private static bool Transform(ILEnumerator inst, ref CodeInstruction result)
+            {
+                inst.source.Append(inst.tf.Invoke(inst.collected));
                 return true;
             }
             #endregion Modes

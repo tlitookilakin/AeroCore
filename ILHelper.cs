@@ -2,290 +2,51 @@
 using HarmonyLib;
 using StardewModdingAPI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Reflection.Emit;
-using AeroCore.Utils;
 using System.Linq;
+using System.Reflection.Emit;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace AeroCore
 {
-    internal class ILHelper
+    public class ILHelper : IEnumerable<CodeInstruction>
     {
-        public readonly string name;
-        public ILGenerator Generator => currentGenerator;
-
-        private enum ActionType { SkipTo, RemoveTo, Skip, RemoveCount, Transform, Add, Finish, Collect, AddLabel };
-        public delegate IEnumerable<CodeInstruction> Transformer(IList<CodeInstruction> instructions);
-
-        private readonly List<(ActionType action, object arg)> actionQueue = new();
-        public IList<CodeInstruction> collected;
+        #region head
+        public delegate IList<CodeInstruction> Transformer(ILEnumerator enumer);
+        private readonly List<(int action, object arg)> actionQueue = new();
+        private readonly string name;
+        private readonly IMonitor monitor;
+        public ILGenerator generator;
         private IEnumerable<CodeInstruction> instructions;
-        private BufferedEnumerator<CodeInstruction> cursor;
-        private int actionIndex = 0;
-        private bool hasErrored = false;
-        private ILGenerator currentGenerator = null;
-        private IMonitor monitor;
-        private readonly Dictionary<string, Label> labels = new();
 
-        /// <summary>Creates a new ILHelper</summary>
-        /// <param name="Name">The name displayed in the log</param>
+        public IEnumerator<CodeInstruction> GetEnumerator() => new ILEnumerator(this);
+        IEnumerator IEnumerable.GetEnumerator() => new ILEnumerator(this);
+
+        /// <summary>Create a new IL Helper</summary>
         /// <param name="Monitor">Your mod's monitor</param>
-        public ILHelper(string Name, IMonitor Monitor)
+        /// <param name="Name">The name of this patch. (Only used for logging.)</param>
+        public ILHelper(IMonitor Monitor, string Name)
         {
-            name = Name;
-            collected = new List<CodeInstruction>();
             monitor = Monitor;
+            name = Name;
         }
 
-        /// <summary>Skip to an instruction set</summary>
-        /// <param name="codes">The instruction set</param>
+        /// <summary>Sets up the helper to run the patch</summary>
+        /// <param name="instructions">The original instruction set</param>
+        /// <param name="Generator">The associated <see cref="ILGenerator"/>. Required if creating <see cref="Label"/>s, otherwise optional.</param>
         /// <returns>This</returns>
-        public ILHelper Skip(IList<CodeInstruction> codes)
+        public ILHelper Run(IEnumerable<CodeInstruction> instructions, ILGenerator Generator = null)
         {
-            actionQueue.Add((ActionType.SkipTo, codes));
+            this.instructions = instructions;
+            generator = Generator;
             return this;
         }
 
-        /// <summary>Skip to an instruction</summary>
-        /// <param name="code">The instruction</param>
-        /// <returns>This</returns>
-        public ILHelper Skip(CodeInstruction code) => Skip(new[] { code });
-
-        /// <summary>Skip a number of instructions</summary>
-        /// <param name="Count">How many instructions to skip</param>
-        /// <returns>This</returns>
-        public ILHelper Skip(int Count)
-        {
-            actionQueue.Add((ActionType.Skip, Count));
-            return this;
-        }
-
-        /// <summary>Delete instructions up to an instruction set</summary>
-        /// <param name="codes">The instructions to stop at</param>
-        /// <returns>This</returns>
-        public ILHelper RemoveTo(IList<CodeInstruction> codes)
-        {
-            actionQueue.Add((ActionType.RemoveTo, codes));
-            return this;
-        }
-
-        /// <summary>Delete instructions up to an instruction</summary>
-        /// <param name="code">The instruction to stop at</param>
-        /// <returns>This</returns>
-        public ILHelper RemoveTo(CodeInstruction code) => RemoveTo(new[] { code });
-
-        /// <summary>Delete a number of instructions</summary>
-        /// <param name="Count">How many to delete</param>
-        /// <returns>This</returns>
-        public ILHelper Remove(int Count)
-        {
-            actionQueue.Add((ActionType.RemoveCount, Count));
-            return this;
-        }
-
-        /// <summary>Transform a set of instructions</summary>
-        /// <param name="codes">The instructions to find and transform</param>
-        /// <param name="transformer">The method that transforms the found instructions</param>
-        /// <returns>This</returns>
-        public ILHelper Transform(IList<CodeInstruction> codes, Transformer transformer)
-        {
-            actionQueue.Add((ActionType.Transform, (codes, transformer)));
-            return this;
-        }
-
-        /// <summary>Transform an instruction</summary>
-        /// <param name="code">The instruction to find and transform</param>
-        /// <param name="transformer">The method that transforms the found instruction</param>
-        /// <returns>This</returns>
-        public ILHelper Transform(CodeInstruction code, Transformer transformer) => Transform(new[] { code }, transformer);
-
-        /// <summary>Add instructions</summary>
-        /// <param name="codes">The instructions to add</param>
-        /// <returns>This</returns>
-        public ILHelper Add(IList<CodeInstruction> codes)
-        {
-            actionQueue.Add((ActionType.Add, codes));
-            return this;
-        }
-
-        /// <summary>Add an instruction</summary>
-        /// <param name="code">The instruction to add</param>
-        /// <returns>This</returns>
-        public ILHelper Add(CodeInstruction code) => Add(new[] { code });
-
-        /// <summary>Output the rest of the instructions as-is</summary>
-        /// <returns>This</returns>
-        public ILHelper Finish()
-        {
-            actionQueue.Add((ActionType.Finish, null));
-            return this;
-        }
-
-        /// <summary>Store a set of instructions for use later</summary>
-        /// <param name="codes">The instructions to find and store</param>
-        /// <returns>This</returns>
-        public ILHelper Collect(IList<CodeInstruction> codes)
-        {
-            actionQueue.Add((ActionType.Collect, codes));
-            return this;
-        }
-
-        /// <summary>Store an instruction for use later</summary>
-        /// <param name="code">The instruction to find and store</param>
-        /// <returns>This</returns>
-        public ILHelper Collect(CodeInstruction code) => Collect(new[] { code });
-
-        /// <summary>Attaches a named label generated by <see cref="MakeLabel"/></summary>
-        /// <param name="label">The name of the label</param>
-        /// <returns>This</returns>
-        public ILHelper AddLabel(string label)
-        {
-            actionQueue.Add((ActionType.AddLabel, label));
-            return this;
-        }
-
-        /// <summary>Generates a label and, if named, stores it for later. Use with <see cref="AddLabel"/>.<br/>
-        /// Requires an ILGenerator to be provided to <see cref="Run"/></summary>
-        /// <param name="labelName">The name of the label</param>
-        /// <returns>The created label</returns>
-        public Label MakeLabel(string labelName = null)
-        {
-            if (currentGenerator is null)
-                monitor.Log($"ILGenerator required but not provided! Patch:'{name}'", LogLevel.Error);
-
-            var l = currentGenerator.DefineLabel();
-            if (labelName != null)
-                labels[labelName] = l;
-            return l;
-        }
-
-        /// <summary>Resets the helper to a default state. Clears all defined actions. Do not use while patching, ever.</summary>
-        public void Reset()
-        {
-            actionQueue.Clear();
-            collected.Clear();
-            labels.Clear();
-        }
-
-        /// <summary>Applies the patch to a given instruction set</summary>
-        /// <param name="Instructions">The original instruction set</param>
-        /// <param name="generator">the ILGenerator for this patch, if needed.</param>
-        /// <returns>The applied patch.</returns>
-        public IEnumerable<CodeInstruction> Run(IEnumerable<CodeInstruction> Instructions, ILGenerator generator = null)
-        {
-            ModEntry.monitor.Log("Now applying patch '" + name + "'...", LogLevel.Trace);
-            currentGenerator = generator;
-            instructions = Instructions;
-            cursor = new(instructions.GetEnumerator());
-            actionIndex = 0;
-            hasErrored = false;
-            labels.Clear();
-            foreach (var (action, arg) in actionQueue)
-            {
-                int count = 0;
-                switch (action)
-                {
-                    case ActionType.Skip:
-                        count = (int)arg;
-                        for (int c = 0; c < count && cursor.MoveNext(); c++)
-                            yield return cursor.Current;
-                        break;
-                    case ActionType.SkipTo:
-                        foreach (var code in matchSequence((IList<CodeInstruction>)arg))
-                            yield return code;
-                        break;
-                    case ActionType.Add:
-                        foreach (var code in (IList<CodeInstruction>)arg)
-                            yield return code;
-                        break;
-                    case ActionType.RemoveCount:
-                        count = (int)arg;
-                        for (int c = 0; c < count && cursor.MoveNext(); c++){};
-                        break;
-                    case ActionType.RemoveTo:
-                        foreach (var code in matchSequence((IList<CodeInstruction>)arg)){}
-                        break;
-                    case ActionType.Collect:
-                        var markers = (IList<CodeInstruction>)arg;
-                        foreach (var code in matchSequence(markers))
-                            yield return code;
-                        collected = cursor.GetBuffer();
-                        break;
-                    case ActionType.Finish:
-                        while (cursor.MoveNext())
-                            yield return cursor.Current;
-                        break;
-                    case ActionType.Transform:
-                        (var tmarkers, var transformer) = (ValueTuple<IList<CodeInstruction>, Transformer>)arg;
-                        foreach (var code in matchSequence(tmarkers))
-                            yield return code;
-                        foreach (var code in transformer(cursor.Take(tmarkers.Count).ToArray()))
-                            yield return code;
-                        break;
-                    case ActionType.AddLabel:
-                        string lname = (string)arg;
-                        if (labels.TryGetValue(lname, out var label))
-                            cursor.Current.labels.Add(label);
-                        else
-                            monitor.Log($"Label with name '{lname}' has not been created and does not exist! Patch:'{name}'",LogLevel.Error);
-                        break;
-                }
-
-                if (hasErrored)
-                    break;
-                actionIndex++;
-            }
-            currentGenerator = null;
-            if (hasErrored)
-                monitor.Log("Failed to correctly apply patch '" + name + "'! May cause problems!", LogLevel.Error);
-            else
-                monitor.Log("Successfully applied patch '" + name + "'.", LogLevel.Trace);
-            hasErrored = false;
-        }
-        private IEnumerable<CodeInstruction> matchSequence(IList<CodeInstruction> markers)
-        {
-            int marker = 0;
-            var matched = new CodeInstruction[markers.Count];
-            while (cursor.MoveNext())
-            {
-                var s = markers[marker];
-                var code = cursor.Current;
-                if(s is null || (code.opcode == s.opcode && CompareOperands(code.operand, s.operand)))
-                {
-                    matched[marker] = code;
-                    marker ++;
-                }
-                else if(marker > 0)
-                {
-                    for (int i = 0; i < marker; i++)
-                    {
-                        yield return matched[i];
-                        matched[i] = null;
-                    }
-                    marker = 0;
-                    yield return code;
-                }
-                else
-                {
-                    yield return code;
-                }
-                if (marker >= markers.Count)
-                {
-                    monitor.Log($"Found markers for '{name}':{actionIndex}", LogLevel.Trace);
-                    foreach(var item in matched)
-                        if(item is not null)
-                            cursor.Push(item);
-                    yield break;
-                }
-            }
-            hasErrored = true;
-            monitor.Log($"Failed to apply patch component '{name}':{actionIndex}; Marker instructions not found!", LogLevel.Error);
-        }
-
-        /// <summary>Throughly compare the operands of two CodeInstructions. Use (int, Type) tuples for locals.</summary>
+        /// <summary>Throughly compare the operands of two <see cref="CodeInstruction"/>s. Use (<see cref="int"/>, <see cref="Type"/>) tuples for locals.</summary>
         /// <param name="op1">Source operand</param>
         /// <param name="op2">Specified operand</param>
-        /// <returns>True if matching, otherwise false</returns>
         public static bool CompareOperands(object op1, object op2)
         {
             if (op1 == null || op1.Equals(op2))
@@ -299,6 +60,343 @@ namespace AeroCore
                 return (oper2.Item1 < 0 || oper1.LocalIndex == oper2.Item1) && (oper2.Item2 == null || oper1.LocalType == oper2.Item2);
             }
             return false;
+        }
+
+        /// <summary>Uses <see cref="CompareOperands(object, object)"/> to compare operands, and also compares operators and checks null</summary>
+        /// <param name="src">Source instruction</param>
+        /// <param name="def">Specified instruction</param>
+        public static bool CompareInstructions(CodeInstruction src, CodeInstruction def)
+        {
+            return def is null || (src.opcode == def.opcode && CompareOperands(src.operand, def.operand));
+        }
+
+        #endregion head
+        #region queue
+        /// <summary>Returns the remainder of the original method unaltered.</summary>
+        public ILHelper Finish()
+        {
+            actionQueue.Add((0, null));
+            return this;
+        }
+
+        /// <summary>Skip a number of instructions</summary>
+        /// <param name="count">How many to skip</param>
+        public ILHelper Skip(int count)
+        {
+            actionQueue.Add((1, count));
+            return this;
+        }
+
+        /// <summary>Move forward to just before a specific instruction</summary>
+        /// <param name="marker">The instruction</param>
+        public ILHelper SkipTo(CodeInstruction marker) => SkipTo(new[] { marker });
+
+        /// <summary>Move forward to just before a specific set of instructions</summary>
+        /// <param name="markers">The instructions</param>
+        public ILHelper SkipTo(IList<CodeInstruction> markers)
+        {
+            actionQueue.Add((2, markers));
+            return this;
+        }
+
+        /// <summary>Remove a certain number of instructions</summary>
+        /// <param name="count">How many to remove</param>
+        public ILHelper Remove(int count)
+        {
+            actionQueue.Add((3, count));
+            return this;
+        }
+
+        /// <summary>Remove all instructions from the current point until a specific instruction</summary>
+        /// <param name="marker">The instruction to stop just before</param>
+        public ILHelper RemoveTo(CodeInstruction marker) => RemoveTo(new[] { marker });
+
+        /// <summary>Remove all instructions from the current point until a specific set of instructions</summary>
+        /// <param name="marker">The instructions to stop just before</param>
+        public ILHelper RemoveTo(IList<CodeInstruction> markers)
+        {
+            actionQueue.Add((4, markers));
+            return this;
+        }
+
+        /// <summary>Add an instruction</summary>
+        /// <param name="instruction">The instruction to add</param>
+        public ILHelper Add(CodeInstruction instruction) => Add(new[]{ instruction });
+
+        /// <summary>Add a set of instructions</summary>
+        /// <param name="instructions">The instructions to add</param>
+        public ILHelper Add(IList<CodeInstruction> instructions)
+        {
+            actionQueue.Add((5, instructions));
+            return this;
+        }
+
+        /// <summary>
+        /// Directly manipulate the instructions at the current point.
+        /// The delegate accepts the cursor in its current state, and outputs a list of instructions to add.
+        /// </summary>
+        /// <param name="transformer">Transformation delegate</param>
+        public ILHelper Transform(Transformer transformer)
+        {
+            actionQueue.Add((6, transformer));
+            return this;
+        }
+        /// <summary>Add a named <see cref="Label"/> to the current instruction. See <see cref="ILEnumerator.CreateLabel"/></summary>
+        /// <param name="id">The name of the previously-created <see cref="Label"/></param>
+        public ILHelper AddLabel(string id) => AddLabels(new[] { id });
+
+        /// <summary>Add a list of named <see cref="Label"/>s to the current instruction. See <see cref="ILEnumerator.CreateLabel"/></summary>
+        /// <param name="ids">The list of names of previously-created <see cref="Label"/>s</param>
+        public ILHelper AddLabels(IList<string> ids)
+        {
+            actionQueue.Add((7, ids));
+            return this;
+        }
+        #endregion queue
+
+        public class ILEnumerator : IEnumerator<CodeInstruction>
+        {
+            private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
+            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels};
+
+            private bool disposedValue;
+            private readonly BufferedEnumerator<CodeInstruction> source;
+            private readonly ILHelper owner;
+            private readonly ILGenerator gen;
+            private readonly Dictionary<string, Label> labels = new();
+
+            private CodeInstruction current;
+            private bool isSetup = false;
+            private Mode mode;
+            private int modeIndex = 0;
+            private bool hasErrored = false;
+
+            private int marker = 0;
+            private IList<CodeInstruction> anchors;
+            private CodeInstruction[] matched;
+            private IList<string> labelsToAdd;
+
+            public CodeInstruction Current => current;
+            object IEnumerator.Current => current;
+
+            internal ILEnumerator(ILHelper Owner)
+            {
+                owner = Owner;
+                gen = owner.generator;
+                source = new(Owner.instructions.GetEnumerator());
+            }
+
+            public bool MoveNext()
+            {
+                if (!isSetup)
+                {
+                    if (!gotoNextMode())
+                    {
+                        owner.monitor.Log($"Patch '{owner.name}' contains no operations! This will result in an empty output!", LogLevel.Error);
+                        return false;
+                    }
+                    isSetup = true;
+                }
+
+                bool r = !hasErrored;
+                if (r)
+                {
+                    while(mode.Invoke(this, ref current) && !hasErrored)
+                    {
+                        if (!gotoNextMode())
+                            return false;
+                    }
+                    if (hasErrored)
+                        owner.monitor.Log($"Patch '{owner.name}' was not applied correctly!", LogLevel.Error);
+                }
+                return r;
+            }
+            public void Reset()
+            {
+                source.Reset();
+                modeIndex = 0;
+                hasErrored = false;
+                isSetup = false;
+                labels.Clear();
+                current = null;
+            }
+
+            /// <summary>Create a new <see cref="Label"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>
+            /// <param name="id">If included, the name of the <see cref="Label"/></param>
+            /// <returns>The created <see cref="Label"/></returns>
+            public Label CreateLabel(string id = null)
+            {
+                if (gen is null)
+                {
+                    error("ILGenerator is required to create labels, but was not provided");
+                    return default;
+                }
+
+                if (labels.TryGetValue(id, out var l))
+                {
+                    error($"Label with ID '{id}' already exists");
+                    return l;
+                }
+
+                Label label = gen.DefineLabel();
+                if (id is not null)
+                    labels.Add(id, label);
+                return label;
+            }
+
+            /// <summary>Get a named <see cref="Label"/></summary>
+            /// <param name="id">The name of the <see cref="Label"/> to get</param>
+            /// <returns>The <see cref="Label"/></returns>
+            public Label GetLabel(string id)
+            {
+                if (labels.TryGetValue(id, out var l))
+                    return l;
+                else
+                    error($"Label with id '{id}' has not been created and does not exit");
+                return default;
+            }
+            private bool gotoNextMode()
+            {
+                if (modeIndex >= owner.actionQueue.Count)
+                    return false;
+                var (action, arg) = owner.actionQueue[modeIndex];
+                mode = modes[action];
+                marker = 0;
+
+                switch (action)
+                {
+                    case 1 or 3: marker = (int)arg; break;
+                    case 2 or 4:
+                        anchors = (IList<CodeInstruction>)arg;
+                        matched = new CodeInstruction[anchors.Count];
+                        break;
+                    case 5: anchors = (IList<CodeInstruction>)arg; break;
+                    case 6: anchors = ((Transformer)arg).Invoke(this); break;
+                    case 7: labelsToAdd = (IList<string>)arg; break;
+                }
+
+                modeIndex++;
+                return true;
+            }
+            private bool matchSequence()
+            {
+                int i = 0;
+                while(i < anchors.Count && CompareInstructions(source.Current, anchors[i]))
+                {
+                    matched[i] = source.Current;
+                    if (!source.MoveNext())
+                    {
+                        flushMatched(i);
+                        source.MoveNext();
+                        return false;
+                    }
+                    i++;
+                }
+                flushMatched(i);
+                source.Push(source.Current);
+                if (i < anchors.Count)
+                {
+                    source.MoveNext();
+                    return false;
+                }
+                return true;
+            }
+            private void flushMatched(int count)
+            {
+                while (count > 0)
+                {
+                    source.Push(matched[count]);
+                    count--;
+                }
+            }
+            private void error(string reason)
+            {
+                hasErrored = true;
+                owner.monitor.Log($"{reason}! @'{owner.name}':{modeIndex}", LogLevel.Error);
+            }
+            #region Modes
+            private static bool Finish(ILEnumerator inst, ref CodeInstruction result)
+            {
+                result = inst.source.Current;
+                return inst.source.MoveNext();
+            }
+            private static bool Skip(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker <= 0 || !inst.source.MoveNext())
+                    return true;
+                result = inst.source.Current;
+                inst.marker--;
+                return false;
+            }
+            private static bool SkipTo(ILEnumerator inst, ref CodeInstruction result)
+            {
+                bool v = inst.matchSequence();
+                if (!v)
+                {
+                    if (!inst.source.MoveNext())
+                    {
+                        inst.error("Could not find marker instructions");
+                        return true;
+                    }
+                    result = inst.source.Current;
+                }
+                return v;
+            }
+            private static bool Remove(ILEnumerator inst, ref CodeInstruction result)
+            {
+                while (inst.marker > 0 && inst.source.MoveNext())
+                    inst.marker--;
+                return true;
+            }
+            private static bool RemoveTo(ILEnumerator inst, ref CodeInstruction result)
+            {
+                var v = true;
+                while (v && !inst.matchSequence())
+                    v = inst.source.MoveNext();
+                if (!v)
+                    inst.error("Could not find marker instructions");
+                return true;
+            }
+            private static bool Add(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker >= inst.anchors.Count)
+                    return true;
+                result = inst.anchors[inst.marker];
+                inst.marker++;
+                return false;
+            }
+            private static bool AddLabels(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if(result is null)
+                    inst.error("Tried to add labels to null instruction");
+                else
+                    foreach (string id in inst.labelsToAdd)
+                        if (inst.labels.TryGetValue(id, out var label))
+                            result.labels.Add(label);
+                        else
+                            inst.error($"Label with id '{id}' has not been created and does not exist");
+                return true;
+
+            }
+            #endregion Modes
+            #region dispose
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposedValue)
+                {
+                    if (disposing)
+                    {
+                        // TODO: dispose managed state (managed objects)
+                    }
+                    disposedValue = true;
+                }
+            }
+            public void Dispose()
+            {
+                Dispose(disposing: true);
+                GC.SuppressFinalize(this);
+            }
+            #endregion dispose
         }
     }
 }

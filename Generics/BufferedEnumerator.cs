@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AeroCore.Generics
 {
     public class BufferedEnumerator<T> : IEnumerator<T>
     {
-        private readonly Queue<T> buffer = new();
+        private readonly Stack<T> buffer = new();
         private readonly IEnumerator<T> basis;
         private T current = default;
         object IEnumerator.Current => current;
@@ -22,7 +23,7 @@ namespace AeroCore.Generics
         {
             if (buffer.Count > 0)
             {
-                current = buffer.Dequeue();
+                current = buffer.Pop();
                 return true;
             }
             bool b = basis.MoveNext();
@@ -35,13 +36,11 @@ namespace AeroCore.Generics
             basis.Reset();
             current = basis.Current;
         }
-        public IList<T> GetBuffer() => buffer.ToArray();
-        public void Push(T item) => buffer.Enqueue(item);
-        public void Append(IList<T> items)
-        {
-            for(int i = 0; i < items.Count; i++)
-                buffer.Enqueue(items[i]);
-        }
+        public IList<T> GetBuffer() => buffer.Reverse().ToArray();
+
+        /// <summary>Add an item to the buffer. Must be added in reverse order.</summary>
+        /// <param name="item"></param>
+        public void Push(T item) => buffer.Push(item);
         public void Clear() => buffer.Clear();
     }
 }

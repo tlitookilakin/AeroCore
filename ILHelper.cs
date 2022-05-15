@@ -281,33 +281,23 @@ namespace AeroCore
             private bool matchSequence()
             {
                 int i = 0;
-                while(i < anchors.Count && CompareInstructions(source.Current, anchors[i]))
+                var last = source.Current;
+                while(i < anchors.Count && source.MoveNext())
                 {
                     matched[i] = source.Current;
-                    if (!source.MoveNext())
-                    {
-                        flushMatched(i);
-                        source.MoveNext();
-                        return false;
-                    }
+                    if (!CompareInstructions(source.Current, anchors[i]))
+                        break;
                     i++;
                 }
-                flushMatched(i);
-                source.Push(source.Current);
-                if (i < anchors.Count)
+                bool ret = i == anchors.Count;
+                while(i > 0)
                 {
-                    source.MoveNext();
-                    return false;
+                    i--;
+                    source.Push(anchors[i]);
                 }
-                return true;
-            }
-            private void flushMatched(int count)
-            {
-                while (count > 0)
-                {
-                    source.Push(matched[count]);
-                    count--;
-                }
+                source.Push(last);
+                source.MoveNext();
+                return ret;
             }
             private void error(string reason)
             {
@@ -317,8 +307,9 @@ namespace AeroCore
             #region Modes
             private static bool Finish(ILEnumerator inst, ref CodeInstruction result)
             {
+                bool r = inst.source.MoveNext();
                 result = inst.source.Current;
-                return inst.source.MoveNext();
+                return r;
             }
             private static bool Skip(ILEnumerator inst, ref CodeInstruction result)
             {

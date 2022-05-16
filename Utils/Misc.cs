@@ -55,5 +55,22 @@ namespace AeroCore.Utils
             s2.CopyTo(array.AsSpan(s1.Length));
             return new(array);
         }
+        public static bool TryGetNext<T>(this IEnumerator<T> e, out T result)
+        {
+            if (e.MoveNext())
+            {
+                result = e.Current;
+                return true;
+            }
+            result = default;
+            return false;
+        }
+        public static T GetNext<T>(this IEnumerator<T> e)
+        {
+            if(e.MoveNext())
+                return e.Current;
+            else
+                throw new IndexOutOfRangeException();
+        }
     }
 }

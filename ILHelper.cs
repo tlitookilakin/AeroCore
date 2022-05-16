@@ -1,4 +1,5 @@
 ﻿using AeroCore.Generics;
+using AeroCore.Utils;
 using HarmonyLib;
 using StardewModdingAPI;
 using System;
@@ -87,11 +88,11 @@ namespace AeroCore
             return this;
         }
 
-        /// <summary>Move forward to just before a specific instruction</summary>
+        /// <summary>Move forward to a specific instruction</summary>
         /// <param name="marker">The instruction</param>
         public ILHelper SkipTo(CodeInstruction marker) => SkipTo(new[] { marker });
 
-        /// <summary>Move forward to just before a specific set of instructions</summary>
+        /// <summary>Move forward to the first of a specific set of instructions</summary>
         /// <param name="markers">The instructions</param>
         public ILHelper SkipTo(IList<CodeInstruction> markers)
         {
@@ -108,11 +109,11 @@ namespace AeroCore
         }
 
         /// <summary>Remove all instructions from the current point until a specific instruction</summary>
-        /// <param name="marker">The instruction to stop just before</param>
+        /// <param name="marker">The instruction to stop at</param>
         public ILHelper RemoveTo(CodeInstruction marker) => RemoveTo(new[] { marker });
 
         /// <summary>Remove all instructions from the current point until a specific set of instructions</summary>
-        /// <param name="marker">The instructions to stop just before</param>
+        /// <param name="marker">The instructions to stop just at</param>
         public ILHelper RemoveTo(IList<CodeInstruction> markers)
         {
             actionQueue.Add((4, markers));
@@ -160,9 +161,9 @@ namespace AeroCore
             private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels};
 
             private bool disposedValue;
-            private readonly BufferedEnumerator<CodeInstruction> source;
+            public readonly BufferedEnumerator<CodeInstruction> source;
             private readonly ILHelper owner;
-            private readonly ILGenerator gen;
+            public readonly ILGenerator gen;
             private readonly Dictionary<string, Label> labels = new();
 
             private CodeInstruction current;
@@ -195,6 +196,12 @@ namespace AeroCore
                         owner.monitor.Log($"Patch '{owner.name}' contains no operations! This will result in an empty output!", LogLevel.Error);
                         return false;
                     }
+                    if (!source.MoveNext())
+                    {
+                        owner.monitor.Log($"Patch '{owner.name}' source instructions empty! Did you forget to Run()?", LogLevel.Error);
+                        return false;
+                    }
+                    current = source.Current;
                     isSetup = true;
                 }
 
@@ -202,10 +209,9 @@ namespace AeroCore
                 if (r)
                 {
                     while(mode.Invoke(this, ref current) && !hasErrored)
-                    {
                         if (!gotoNextMode())
                             return false;
-                    }
+
                     if (hasErrored)
                         owner.monitor.Log($"Patch '{owner.name}' was not applied correctly!", LogLevel.Error);
                 }
@@ -281,21 +287,23 @@ namespace AeroCore
             private bool matchSequence()
             {
                 int i = 0;
-                var last = source.Current;
-                while(i < anchors.Count && source.MoveNext())
+                bool r = false;
+                while(i < anchors.Count)
                 {
                     matched[i] = source.Current;
-                    if (!CompareInstructions(source.Current, anchors[i]))
+                    r = source.MoveNext();
+                    if (!CompareInstructions(source.Current, anchors[i]) || !r)
                         break;
                     i++;
                 }
                 bool ret = i == anchors.Count;
+                if(r)
+                    source.Push(source.Current);
                 while(i > 0)
                 {
                     i--;
                     source.Push(anchors[i]);
                 }
-                source.Push(last);
                 source.MoveNext();
                 return ret;
             }
@@ -307,21 +315,21 @@ namespace AeroCore
             #region Modes
             private static bool Finish(ILEnumerator inst, ref CodeInstruction result)
             {
-                bool r = inst.source.MoveNext();
                 result = inst.source.Current;
-                return r;
+                return inst.source.MoveNext();
             }
             private static bool Skip(ILEnumerator inst, ref CodeInstruction result)
             {
+                result = inst.source.Current;
                 if (inst.marker <= 0 || !inst.source.MoveNext())
                     return true;
-                result = inst.source.Current;
                 inst.marker--;
                 return false;
             }
             private static bool SkipTo(ILEnumerator inst, ref CodeInstruction result)
             {
                 bool v = inst.matchSequence();
+                result = inst.source.Current;
                 if (!v)
                 {
                     if (!inst.source.MoveNext())
@@ -329,7 +337,6 @@ namespace AeroCore
                         inst.error("Could not find marker instructions");
                         return true;
                     }
-                    result = inst.source.Current;
                 }
                 return v;
             }
@@ -337,6 +344,7 @@ namespace AeroCore
             {
                 while (inst.marker > 0 && inst.source.MoveNext())
                     inst.marker--;
+                result = inst.source.Current;
                 return true;
             }
             private static bool RemoveTo(ILEnumerator inst, ref CodeInstruction result)
@@ -346,6 +354,8 @@ namespace AeroCore
                     v = inst.source.MoveNext();
                 if (!v)
                     inst.error("Could not find marker instructions");
+                else
+                    result = inst.source.Current;
                 return true;
             }
             private static bool Add(ILEnumerator inst, ref CodeInstruction result)

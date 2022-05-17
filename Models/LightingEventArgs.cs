@@ -1,11 +1,12 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AeroCore.API;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using System;
 
 namespace AeroCore.Models
 {
-    public class LightingEventArgs
+    public class LightingEventArgs : ILightingEventArgs
     {
         public float intensity { get; }
         public Color ambient { get; }

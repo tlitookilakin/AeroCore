@@ -6,13 +6,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AeroCore
+namespace AeroCore.API
 {
-    public class API
+    public class API : IAeroCoreAPI
     {
+        public event Action<ILightingEventArgs> LightingEvent;
+
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>
-        public static void InitAll(Type ModClass)
+        public void InitAll(Type ModClass)
         {
             var ass = ModClass.Assembly;
             foreach(var type in ass.DefinedTypes)
@@ -38,5 +40,11 @@ namespace AeroCore
                 continue;
             }
         }
+        #region internals
+        internal void DoLighting(ILightingEventArgs ev) => LightingEvent?.Invoke(ev);
+        internal API() {
+            Patches.Lighting.LightingEvent += DoLighting;
+        }
+        #endregion internals
     }
 }

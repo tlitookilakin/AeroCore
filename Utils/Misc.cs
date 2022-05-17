@@ -8,14 +8,6 @@ namespace AeroCore.Utils
 {
     public static class Misc
     {
-        public static IEnumerable<T> Take<T>(this IEnumerator<T> source, int count)
-        {
-            while(count > 0 && source.MoveNext())
-            {
-                yield return source.Current;
-                count--;
-            }
-        }
         public static Point LocalToGlobal(int x, int y)
         {
             return new(x + Game1.viewport.X, y + Game1.viewport.Y);
@@ -27,12 +19,16 @@ namespace AeroCore.Utils
         public static IEnumerable<Point> pointsIn(this Rectangle rect)
         {
             for (int x = 0; x < rect.Width; x++)
-            {
                 for (int y = 0; y < rect.Height; y++)
-                {
                     yield return new Point(x + rect.X, y + rect.Y);
-                }
-            }
+        }
+        public static IList<Point> allPointsIn(this Rectangle rect)
+        {
+            var points = new Point[rect.Width * rect.Height];
+            for (int x = 0; x < rect.Width; x++)
+                for (int y = 0; y < rect.Height; y++)
+                    points[x + y * rect.Width] = new(x + rect.X, y + rect.Y);
+            return points;
         }
         public static bool IsFestivalAtLocation(string Location)
         {
@@ -54,23 +50,6 @@ namespace AeroCore.Utils
             s1.CopyTo(array);
             s2.CopyTo(array.AsSpan(s1.Length));
             return new(array);
-        }
-        public static bool TryGetNext<T>(this IEnumerator<T> e, out T result)
-        {
-            if (e.MoveNext())
-            {
-                result = e.Current;
-                return true;
-            }
-            result = default;
-            return false;
-        }
-        public static T GetNext<T>(this IEnumerator<T> e)
-        {
-            if(e.MoveNext())
-                return e.Current;
-            else
-                throw new IndexOutOfRangeException();
         }
     }
 }

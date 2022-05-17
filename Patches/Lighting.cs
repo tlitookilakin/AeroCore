@@ -17,9 +17,10 @@ namespace AeroCore.Patches
     [HarmonyPatch]
     internal class Lighting
     {
-        internal static event Action<LightingEventArgs> LightingChanged;
+        internal static event Action<LightingEventArgs> LightingEvent;
         private static Vector2 offset;
         private static Vector2 v_offset;
+
         public static MethodBase TargetMethod() => AccessTools.TypeByName("StardewModdingAPI.Framework.SGame").MethodNamed("DrawImpl");
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => patcher.Run(instructions);
 
@@ -27,7 +28,7 @@ namespace AeroCore.Patches
             .SkipTo(new CodeInstruction[]
             {
                 new(OpCodes.Call, typeof(Game1).MethodNamed("get_lightmap")),
-                new(OpCodes.Callvirt, typeof(Viewport).MethodNamed("get_Bounds"))
+                new(OpCodes.Callvirt, typeof(Texture2D).MethodNamed("get_Bounds"))
             })
             .Skip(2)
             .Transform(InjectEvent)
@@ -39,7 +40,7 @@ namespace AeroCore.Patches
                 new(OpCodes.Div),
                 new(OpCodes.Conv_R4)
             })
-            .Skip(4)
+            .Skip(5)
             .Add(new CodeInstruction[]
             {
                 new(OpCodes.Ldsfld, typeof(Lighting).FieldNamed(nameof(v_offset))),
@@ -70,14 +71,16 @@ namespace AeroCore.Patches
         internal static void EmitEvent(Color ambient, float intensity)
         {
             GetOffset();
-            LightingChanged.Invoke(new(intensity, ambient, v_offset));
+            LightingEvent?.Invoke(new(intensity, ambient, v_offset));
         }
         internal static void GetOffset()
         {
             int pixsize = Game1.options.lightingQuality / 2;
             var pos = Game1.viewport.Location;
+            // lightmap draw offset
             offset = new(-(pos.X % pixsize), -(pos.Y % pixsize));
-            v_offset = new(offset.X / (float)pixsize, offset.Y / (float)pixsize);
+            // lighting subpixel offset
+            v_offset = new(-offset.X / (float)pixsize, -offset.Y / (float)pixsize);
         }
     }
 }

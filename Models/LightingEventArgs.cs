@@ -20,5 +20,17 @@ namespace AeroCore.Models
             this.ambient = ambient;
             this.scale = 2f / Game1.options.lightingQuality;
         }
+        public Vector2 GlobalToLocal(Vector2 position)
+        {
+            var port = Game1.viewport.Location;
+            return new((position.X - port.X) * scale + offset.X, (position.Y - port.Y) * scale + offset.Y);
+        }
+        public Vector2 ScreenToLocal(Vector2 position) => position * scale + offset;
+        public Point GlobalToLocal(Point position)
+        {
+            var port = Game1.viewport.Location;
+            return new((int)((position.X - port.X) * scale + offset.X), (int)((position.Y - port.Y) * scale + offset.Y));
+        }
+        public Point ScreenToLocal(Point position) => new((int)(position.X * scale), (int)(position.Y * scale));
     }
 }

@@ -17,6 +17,7 @@ namespace AeroCore
         #region head
         public delegate IList<CodeInstruction> Transformer(ILEnumerator enumer);
         private readonly List<(int action, object arg)> actionQueue = new();
+        public bool Debug = false;
         private readonly string name;
         private readonly IMonitor monitor;
         public ILGenerator generator;
@@ -28,10 +29,11 @@ namespace AeroCore
         /// <summary>Create a new IL Helper</summary>
         /// <param name="Monitor">Your mod's monitor</param>
         /// <param name="Name">The name of this patch. (Only used for logging.)</param>
-        public ILHelper(IMonitor Monitor, string Name)
+        public ILHelper(IMonitor Monitor, string Name, bool debug = false)
         {
             monitor = Monitor;
             name = Name;
+            Debug = debug;
         }
 
         /// <summary>Sets up the helper to run the patch</summary>
@@ -50,7 +52,7 @@ namespace AeroCore
         /// <param name="op2">Specified operand</param>
         public static bool CompareOperands(object op1, object op2)
         {
-            if (op1 == null || op1.Equals(op2))
+            if (op2 == null || op2.Equals(op1))
                 return true;
 
             if (op1 is sbyte sb && Convert.ToInt32(sb).Equals(op2))
@@ -68,7 +70,7 @@ namespace AeroCore
         /// <param name="def">Specified instruction</param>
         public static bool CompareInstructions(CodeInstruction src, CodeInstruction def)
         {
-            return def is null || (src.opcode == def.opcode && CompareOperands(src.operand, def.operand));
+            return def is null || (def.opcode.Equals(src.opcode) && CompareOperands(src.operand, def.operand));
         }
 
         #endregion head
@@ -166,7 +168,7 @@ namespace AeroCore
             public readonly ILGenerator gen;
             private readonly Dictionary<string, Label> labels = new();
 
-            private CodeInstruction current;
+            private CodeInstruction current = null;
             private bool isSetup = false;
             private Mode mode;
             private int modeIndex = 0;
@@ -208,12 +210,13 @@ namespace AeroCore
                 bool r = !hasErrored;
                 if (r)
                 {
-                    while(mode.Invoke(this, ref current) && !hasErrored)
+                    while (mode.Invoke(this, ref current) && !hasErrored)
                         if (!gotoNextMode())
                             return false;
 
                     if (hasErrored)
                         owner.monitor.Log($"Patch '{owner.name}' was not applied correctly!", LogLevel.Error);
+                    r = !hasErrored;
                 }
                 return r;
             }
@@ -287,22 +290,30 @@ namespace AeroCore
             private bool matchSequence()
             {
                 int i = 0;
-                bool r = false;
-                while(i < anchors.Count)
+                bool r = true;
+                bool ret = false;
+                while(i < anchors.Count && r)
                 {
                     matched[i] = source.Current;
-                    r = source.MoveNext();
-                    if (!CompareInstructions(source.Current, anchors[i]) || !r)
-                        break;
+
+                    if (owner.Debug && i > 0)
+                        owner.monitor.Log(source.Current.ToString(), LogLevel.Debug);
+
                     i++;
+                    if (!CompareInstructions(source.Current, anchors[i - 1]))
+                        break;
+                    ret = i >= anchors.Count;
+
+                    if (owner.Debug && i == 1)
+                        owner.monitor.Log(source.Current.ToString(), LogLevel.Debug);
+
+                    if (i < anchors.Count)
+                        r = source.MoveNext();
                 }
-                bool ret = i == anchors.Count;
-                if(r)
-                    source.Push(source.Current);
                 while(i > 0)
                 {
                     i--;
-                    source.Push(anchors[i]);
+                    source.Push(matched[i]);
                 }
                 source.MoveNext();
                 return ret;
@@ -316,7 +327,7 @@ namespace AeroCore
             private static bool Finish(ILEnumerator inst, ref CodeInstruction result)
             {
                 result = inst.source.Current;
-                return inst.source.MoveNext();
+                return !inst.source.MoveNext();
             }
             private static bool Skip(ILEnumerator inst, ref CodeInstruction result)
             {

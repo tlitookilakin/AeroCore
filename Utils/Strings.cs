@@ -90,8 +90,9 @@ namespace AeroCore.Utils
             int count = PathUtilities.GetSegments(path).Length;
             return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString()).Skip(count));
         }
-        public static IEnumerable<string> SafeSplit(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
+        public static IList<string> SafeSplit(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
         {
+            List<string> result = new();
             bool dquote = false;
             bool squote = false;
             bool escaped = false;
@@ -140,7 +141,7 @@ namespace AeroCore.Utils
                         {
                             s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
                             if (!RemoveEmpty || i - last - skipped > 0)
-                                yield return prev[last..(i - skipped)].ToString();
+                                result.Add(prev[last..(i - skipped)].ToString());
                             last = i + 1;
                             skip = last;
                             skipped = 0;
@@ -150,26 +151,10 @@ namespace AeroCore.Utils
             }
             s[skip..].CopyTo(prev.AsSpan(skip - skipped));
             if (s.Length - last - skipped > 0)
-                yield return prev[last..^skipped].ToString();
-            yield break;
+                result.Add(prev[last..^skipped].ToString());
+            return result;
         }
         public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
-        public static IEnumerable<string> Split(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
-        {
-            int last = 0;
-            for(int i = 0; i < s.Length; i++)
-            {
-                if (s[i] == delim)
-                {
-                    if(!RemoveEmpty || i - last > 0)
-                        yield return s[last..i].ToString();
-                    last = i + 1;
-                }
-            }
-            if (last < s.Length)
-                yield return s[last..].ToString();
-            yield break;
-        }
 
         /// <summary>Parses a color from a string. Valid formats: #rgb #rgba #rrggbb #rrggbbaa r,g,b r,g,b,a</summary>
         /// <param name="str">The string to parse from</param>

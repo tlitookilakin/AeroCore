@@ -30,6 +30,7 @@ namespace AeroCore
             helper.Events.GameLoop.SaveLoaded += (s, e) => Utils.Reflection.mp = mp.GetValue();
 
             API.InitAll(typeof(ModEntry));
+            harmony.PatchAll();
         }
     }
 }

@@ -8,7 +8,7 @@ namespace AeroCore
 {
     public class ModEntry : Mod
     {
-        internal ITranslationHelper i18n => Helper.Translation;
+        internal static ITranslationHelper i18n;
         internal static IMonitor monitor;
         internal static IModHelper helper;
         internal static Harmony harmony;
@@ -26,6 +26,7 @@ namespace AeroCore
             harmony = new(ModManifest.UniqueID);
             ModID = ModManifest.UniqueID;
             api = new();
+            i18n = helper.Translation;
 
             mp = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
 

@@ -178,6 +178,7 @@ namespace AeroCore
             private IList<CodeInstruction> anchors;
             private CodeInstruction[] matched;
             private IList<string> labelsToAdd;
+            private bool isLastItem = false;
 
             public CodeInstruction Current => current;
             object IEnumerator.Current => current;
@@ -191,6 +192,9 @@ namespace AeroCore
 
             public bool MoveNext()
             {
+                if (isLastItem)
+                    return false;
+
                 if (!isSetup)
                 {
                     if (!gotoNextMode())
@@ -212,8 +216,10 @@ namespace AeroCore
                 {
                     while (mode.Invoke(this, ref current) && !hasErrored)
                         if (!gotoNextMode())
-                            return false;
-
+                        {
+                            isLastItem = true;
+                            break;
+                        }
                     if (hasErrored)
                         owner.monitor.Log($"Patch '{owner.name}' was not applied correctly!", LogLevel.Error);
                     r = !hasErrored;
@@ -228,6 +234,7 @@ namespace AeroCore
                 isSetup = false;
                 labels.Clear();
                 current = null;
+                isLastItem = false;
             }
 
             /// <summary>Create a new <see cref="Label"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>

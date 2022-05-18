@@ -16,6 +16,7 @@ namespace AeroCore
         {
             Patches.Lighting.LightingEvent += DoLightDraw;
             ModEntry.helper.Events.Input.CursorMoved += UpdateMousePos;
+            Patches.Action.ActionCursors.Add("Mailbox", 1);
         }
         private static void UpdateMousePos(object _, CursorMovedEventArgs ev)
         {

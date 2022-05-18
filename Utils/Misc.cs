@@ -44,10 +44,9 @@ namespace AeroCore.Utils
             if (Game1.weatherIcon != 1)
                 return true;
 
-            return !int.TryParse(
-                ModEntry.helper.GameContent.Load<Dictionary<string, string>>(
-                    "Data/Festivals/" + Game1.currentSeason + Game1.dayOfMonth)["conditions"].Split('/')[1].Split(' ')[0],
-                    out int time) || time <= Game1.timeOfDay;
+            string c = ModEntry.helper.GameContent.Load<Dictionary<string, string>>($"Data/Festivals/{Game1.currentSeason}{Game1.dayOfMonth}")["conditions"];
+
+            return !int.TryParse(c.GetChunk('/', 1).GetChunk(' ',0), out int time) || time <= Game1.timeOfDay;
         }
         public static ReadOnlySpan<T> Concat<T>(this ReadOnlySpan<T> s1, ReadOnlySpan<T> s2)
         {
@@ -84,7 +83,7 @@ namespace AeroCore.Utils
                 visible.Add(PagedResponses.Value[i]);
 
             if (PagedResponses.Value.Count > (PageIndex.Value + 1) * 5)
-                visible.Add(new("_nextPage", '>' + ModEntry.i18n.Get("misc.generic.next")));
+                visible.Add(new("_nextPage", ModEntry.i18n.Get("misc.generic.next") + '>'));
 
             Game1.currentLocation.createQuestionDialogue(PagedQuestion.Value, visible.ToArray(), HandlePagedResponse);
         }

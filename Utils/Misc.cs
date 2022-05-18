@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,10 @@ namespace AeroCore.Utils
 {
     public static class Misc
     {
+        private static readonly PerScreen<List<Response>> PagedResponses = new(() => new());
+        private static readonly PerScreen<int> PageIndex = new();
+        private static readonly PerScreen<Action<Farmer, string>> PagedResponseConfirmed = new();
+        private static readonly PerScreen<string> PagedQuestion = new();
         public static Point LocalToGlobal(int x, int y)
         {
             return new(x + Game1.viewport.X, y + Game1.viewport.Y);
@@ -50,6 +55,58 @@ namespace AeroCore.Utils
             s1.CopyTo(array);
             s2.CopyTo(array.AsSpan(s1.Length));
             return new(array);
+        }
+        public static void ShowPagedResponses(string question, Response[] responses, Action<Farmer, string> on_response, bool auto_select_single = false)
+        {
+            if (responses.Length == 0)
+                return;
+
+            if (responses.Length == 1 && auto_select_single)
+            {
+                on_response(Game1.player, responses[0].responseKey);
+                return;
+            }
+
+            PagedResponses.Value.AddRange(responses);
+            PageIndex.Value = 0;
+            PagedResponseConfirmed.Value = on_response;
+            PagedQuestion.Value = question;
+
+            ShowResponsePage();
+        }
+        private static void ShowResponsePage()
+        {
+            List<Response> visible = new();
+            if (PageIndex.Value > 0)
+                visible.Add(new("_prevPage", '@' + ModEntry.i18n.Get("misc.generic.previous")));
+
+            for(int i = PageIndex.Value * 5; i < PagedResponses.Value.Count; i++)
+                visible.Add(PagedResponses.Value[i]);
+
+            if (PagedResponses.Value.Count > (PageIndex.Value + 1) * 5)
+                visible.Add(new("_nextPage", '>' + ModEntry.i18n.Get("misc.generic.next")));
+
+            Game1.currentLocation.createQuestionDialogue(PagedQuestion.Value, visible.ToArray(), HandlePagedResponse);
+        }
+        private static void HandlePagedResponse(Farmer who, string key)
+        {
+            if(key == "_nextPage" || key == "_prevPage")
+            {
+                if(key == "_nextPage")
+                    PageIndex.Value++;
+                else
+                    PageIndex.Value--;
+                ShowResponsePage();
+            }
+            else
+            {
+                PagedResponses.Value.Clear();
+                PageIndex.Value = 0;
+                PagedResponseConfirmed.Value = null;
+                PagedQuestion.Value = null;
+                if(key != "_cancel")
+                    PagedResponseConfirmed.Value(who, key);
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿{
 	"misc.lightQuality.ultra": "Ultra",
-	"misc.lightQuality.extreme": "Extreme"
+	"misc.lightQuality.extreme": "Extreme",
+	"misc.generic.previous": "Previous",
+	"misc.generic.next": "Next"
 }

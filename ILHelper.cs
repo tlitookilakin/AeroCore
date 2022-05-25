@@ -155,12 +155,21 @@ namespace AeroCore
             actionQueue.Add((7, ids));
             return this;
         }
+
+        /// <summary>Creates a jump instruction pointing to a named label</summary>
+        /// <param name="opcode">The <see cref="OpCode"/>. MUST be some kind of BR opcode, or the IL will be invalid</param>
+        /// <param name="where">The name of the label to jump to</param>
+        public ILHelper AddJump(OpCode opcode, string where)
+        {
+            actionQueue.Add((8, (opcode, where)));
+            return this;
+        }
         #endregion queue
 
         public class ILEnumerator : IEnumerator<CodeInstruction>
         {
             private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
-            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels};
+            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump};
 
             private bool disposedValue;
             public readonly BufferedEnumerator<CodeInstruction> source;
@@ -179,6 +188,7 @@ namespace AeroCore
             private CodeInstruction[] matched;
             private IList<string> labelsToAdd;
             private bool isLastItem = false;
+            private OpCode jumpCode;
 
             public CodeInstruction Current => current;
             object IEnumerator.Current => current;
@@ -237,6 +247,16 @@ namespace AeroCore
                 isLastItem = false;
             }
 
+            /// <summary>Get a named <see cref="Label"/>, or create it if it does not exist.</summary>
+            /// <param name="id">The name of the <see cref="Label"/></param>
+            public Label GetOrCreateLabel(string id)
+            {
+                if (labels.TryGetValue(id, out var l))
+                    return l;
+                else
+                    return CreateLabel(id);
+            }
+
             /// <summary>Create a new <see cref="Label"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>
             /// <param name="id">If included, the name of the <see cref="Label"/></param>
             /// <returns>The created <see cref="Label"/></returns>
@@ -289,6 +309,11 @@ namespace AeroCore
                     case 5: anchors = (IList<CodeInstruction>)arg; break;
                     case 6: anchors = ((Transformer)arg).Invoke(this); break;
                     case 7: labelsToAdd = (IList<string>)arg; break;
+                    case 8:
+                        var (what, where) = ((OpCode, string))arg;
+                        jumpCode = what;
+                        labelsToAdd = new string[] {where};
+                        break;
                 }
 
                 modeIndex++;
@@ -396,6 +421,15 @@ namespace AeroCore
                             inst.error($"Label with id '{id}' has not been created and does not exist");
                 return true;
 
+            }
+            private static bool AddJump(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker > 0)
+                    return true;
+
+                inst.marker++;
+                result = new(inst.jumpCode, inst.GetOrCreateLabel(inst.labelsToAdd[0]));
+                return false;
             }
             #endregion Modes
             #region dispose

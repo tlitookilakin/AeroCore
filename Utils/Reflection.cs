@@ -17,6 +17,8 @@ namespace AeroCore.Utils
 
         public static MethodInfo MethodNamed(this Type type, string name) => AccessTools.Method(type, name);
         public static MethodInfo MethodNamed(this Type type, string name, Type[] args) => AccessTools.Method(type, name, args);
+        public static MethodInfo PropertyGetter(this Type type, string name) => AccessTools.PropertyGetter(type, name);
+        public static MethodInfo PropertySetter(this Type type, string name) => AccessTools.PropertySetter(type, name);
         public static FieldInfo FieldNamed(this Type type, string name) => AccessTools.Field(type, name);
         public static CodeInstruction WithLabels(this CodeInstruction code, params Label[] labels)
         {

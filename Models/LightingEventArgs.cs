@@ -11,12 +11,14 @@ namespace AeroCore.Models
         public float intensity { get; }
         public Color ambient { get; }
         public Vector2 offset { get; }
+        public Vector2 worldOffset { get; }
         public float scale { get; }
         public SpriteBatch batch => Game1.spriteBatch;
 
-        internal LightingEventArgs(float intensity, Color ambient, Vector2 offset)
+        internal LightingEventArgs(float intensity, Color ambient, Vector2 offset, Vector2 wOffset)
         {
             this.offset = offset;
+            this.worldOffset = wOffset;
             this.intensity = intensity;
             this.ambient = ambient;
             this.scale = 2f / Game1.options.lightingQuality;

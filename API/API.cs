@@ -1,5 +1,7 @@
 ﻿using AeroCore.Models;
 using HarmonyLib;
+using Microsoft.Xna.Framework;
+using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,8 +10,27 @@ namespace AeroCore.API
 {
     public class API : IAeroCoreAPI
     {
+        #region interface_accessible
         public event Action<ILightingEventArgs> LightingEvent;
-
+        public void RegisterAction(string name, Action<Farmer, string, Point> action, int cursor = 0)
+        {
+            Patches.Action.Actions[name] = action;
+            ChangeActionCursor(name, cursor);
+        }
+        public void UnregisterAction(string name)
+        {
+            Patches.Action.Actions.Remove(name);
+            Patches.Action.ActionCursors.Remove(name);
+        }
+        public void ChangeActionCursor(string name, int cursor)
+        {
+            cursor = Math.Clamp(cursor, 0, 7);
+            if (cursor != 0)
+                Patches.Action.ActionCursors[name] = cursor;
+            else
+                Patches.Action.ActionCursors.Remove(name);
+        }
+        #endregion interface_accessible
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>
         public void InitAll(Type ModClass)

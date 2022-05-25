@@ -175,6 +175,13 @@ namespace AeroCore.Utils
             return result;
         }
         public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
+        public static List<string> SafeSplitList(this string s, char delim, bool RemoveEmpty = false)
+        {
+            List<string> result = new();
+            foreach(var str in s.SafeSplit(delim, RemoveEmpty))
+                result.Add(str);
+            return result;
+        }
 
         /// <summary>Parses a color from a string. Valid formats: #rgb #rgba #rrggbb #rrggbbaa r,g,b r,g,b,a</summary>
         /// <param name="str">The string to parse from</param>

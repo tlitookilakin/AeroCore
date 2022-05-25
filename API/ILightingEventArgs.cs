@@ -9,6 +9,7 @@ namespace AeroCore.API
         public float intensity { get; }
         public Color ambient { get; }
         public Vector2 offset { get; }
+        public Vector2 worldOffset { get; }
         public float scale { get; }
         public SpriteBatch batch { get; }
         public Vector2 GlobalToLocal(Vector2 position);

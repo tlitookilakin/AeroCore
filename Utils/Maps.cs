@@ -56,5 +56,8 @@ namespace AeroCore.Utils
             who.currentLocation = Game1.currentLocation;
             Game1.panScreen(0, 0);
         }
+        public static Point toPoint(this xTile.Dimensions.Location loc) => new(loc.X, loc.Y);
+        public static Rectangle toRect(this xTile.Dimensions.Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+        public static Point toPoint(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
     }
 }

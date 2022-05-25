@@ -13,14 +13,10 @@ namespace AeroCore.Utils
         private static readonly PerScreen<int> PageIndex = new();
         private static readonly PerScreen<Action<Farmer, string>> PagedResponseConfirmed = new();
         private static readonly PerScreen<string> PagedQuestion = new();
-        public static Point LocalToGlobal(int x, int y)
-        {
-            return new(x + Game1.viewport.X, y + Game1.viewport.Y);
-        }
-        public static Point LocalToGlobal(Point pos)
-        {
-            return LocalToGlobal(pos.X, pos.Y);
-        }
+        public static Point LocalToGlobal(int x, int y) => new(x + Game1.viewport.X, y + Game1.viewport.Y);
+        public static Point LocalToGlobal(Point pos) => LocalToGlobal(pos.X, pos.Y);
+        public static Vector2 LocalToGlobal(float x, float y) => new(x + Game1.viewport.X, y + Game1.viewport.Y);
+        public static Vector2 LocalToGlobal(Vector2 pos) => LocalToGlobal(pos.X, pos.Y);
         public static IEnumerable<Point> pointsIn(this Rectangle rect)
         {
             for (int x = 0; x < rect.Width; x++)

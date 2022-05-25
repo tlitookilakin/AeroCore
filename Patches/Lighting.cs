@@ -68,7 +68,7 @@ namespace AeroCore.Patches
         internal static void EmitEvent(Color ambient, float intensity)
         {
             GetOffset();
-            LightingEvent?.Invoke(new(intensity, ambient, v_offset));
+            LightingEvent?.Invoke(new(intensity, ambient, v_offset, offset));
         }
         internal static void GetOffset()
         {

@@ -12,6 +12,7 @@ namespace AeroCore.API
     {
         #region interface_accessible
         public event Action<ILightingEventArgs> LightingEvent;
+        public event Action<IUseItemEventArgs> UseItemEvent;
         public void RegisterAction(string name, Action<Farmer, string, Point> action, int cursor = 0)
         {
             Patches.Action.Actions[name] = action;
@@ -60,9 +61,9 @@ namespace AeroCore.API
             }
         }
         #region internals
-        internal void DoLighting(ILightingEventArgs ev) => LightingEvent?.Invoke(ev);
         internal API() {
-            Patches.Lighting.LightingEvent += DoLighting;
+            Patches.Lighting.LightingEvent += (e) => LightingEvent?.Invoke(e);
+            Patches.UseItem.OnUseItem += (e) => UseItemEvent?.Invoke(e);
         }
         #endregion internals
     }

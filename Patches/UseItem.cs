@@ -6,13 +6,14 @@ using System;
 using SObject = StardewValley.Object;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using AeroCore.API;
 
 namespace AeroCore.Patches
 {
     [HarmonyPatch(typeof(Game1))]
     internal class UseItem
     {
-        public static event Action<UseItemEventArgs> OnUseItem;
+        public static event Action<IUseItemEventArgs> OnUseItem;
 
         [HarmonyPatch(nameof(Game1.pressActionButton))]
         [HarmonyTranspiler]
@@ -62,14 +63,16 @@ namespace AeroCore.Patches
 
         private static bool ActivateObject()
         {
-            var ev = new UseItemEventArgs(Game1.player.ActiveObject, Game1.currentLocation);
+            var who = Game1.player;
+            if(!who.canMove || who.ActiveObject.isTemporarilyInvisible)
+                return false;
+            var ev = new UseItemEventArgs(false, who.ActiveObject);
             OnUseItem?.Invoke(ev);
             return ev.IsHandled;
         }
         private static bool ActivateTool()
         {
-            var who = Game1.player;
-            var ev = new UseItemEventArgs(who.CurrentTool, Game1.currentLocation, (int)who.lastClick.X, (int)who.lastClick.Y, who);
+            var ev = new UseItemEventArgs(true, Game1.player.CurrentTool);
             OnUseItem?.Invoke(ev);
             return ev.IsHandled;
         }

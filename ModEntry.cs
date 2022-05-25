@@ -1,5 +1,7 @@
-﻿using HarmonyLib;
+﻿using AeroCore.Integration;
+using HarmonyLib;
 using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
@@ -14,6 +16,7 @@ namespace AeroCore
         internal static Harmony harmony;
         internal static string ModID;
         internal static API.API api;
+        internal static IDGAAPI DGA;
 
         private IReflectedField<Multiplayer> mp;
 
@@ -30,10 +33,19 @@ namespace AeroCore
 
             mp = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
 
-            helper.Events.GameLoop.SaveLoaded += (s, e) => Utils.Reflection.mp = mp.GetValue();
-
+            helper.Events.GameLoop.SaveLoaded += EnteredWorld;
+            helper.Events.GameLoop.GameLaunched += Init;
+        }
+        private void Init(object _, GameLaunchedEventArgs ev)
+        {
+            if (helper.ModRegistry.IsLoaded("spacechase0.DynamicGameAssets"))
+                DGA = helper.ModRegistry.GetApi<IDGAAPI>("spacechase0.DynamicGameAssets");
             api.InitAll(typeof(ModEntry));
             harmony.PatchAll();
+        }
+        private void EnteredWorld(object _, SaveLoadedEventArgs ev)
+        {
+            Utils.Reflection.mp = mp.GetValue();
         }
         public override object GetApi() => api;
     }

@@ -1,21 +1,19 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AeroCore.API;
+using AeroCore.Utils;
+using Microsoft.Xna.Framework;
 using StardewValley;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AeroCore.Models
 {
-    public class UseItemEventArgs
+    public class UseItemEventArgs : IUseItemEventArgs
     {
-        public readonly GameLocation Where;
-        public readonly Point Tile;
-        public readonly Farmer Who;
-        public readonly bool NormalGameplay;
-        public readonly bool IsTool;
-        public readonly Item Item;
+        public GameLocation Where { get; }
+        public Point Tile { get; }
+        public Farmer Who { get; }
+        public bool NormalGameplay { get; }
+        public bool IsTool { get; }
+        public Item Item { get; }
+        public string ItemStringID { get; }
         public bool IsHandled
         {
             get => isHandled;
@@ -23,25 +21,17 @@ namespace AeroCore.Models
         }
         private bool isHandled = false;
 
-        internal UseItemEventArgs(Item what, GameLocation where, int x, int y, Farmer who)
+        internal UseItemEventArgs(bool isTool, Item what)
         {
-            Where = where;
-            Tile = new(x, y);
-            Who = who;
-            NormalGameplay = GetIsNormalGameplay();
-            Item = what;
-            IsTool = true;
-        }
-        internal UseItemEventArgs(Item what, GameLocation where)
-        {
-            Where = where;
-            Tile = Game1.player.getTileLocationPoint();
+            Where = Game1.currentLocation;
             Who = Game1.player;
             NormalGameplay = GetIsNormalGameplay();
             Item = what;
-            IsTool = false;
+            IsTool = isTool;
+            Tile = Who.getTileLocationPoint();
+            ItemStringID = Item.GetStringID();
         }
-        private bool GetIsNormalGameplay()
+        private static bool GetIsNormalGameplay()
         {
             return 
                 !Game1.eventUp && 

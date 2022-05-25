@@ -103,5 +103,6 @@ namespace AeroCore.Utils
                     PagedResponseConfirmed.Value(who, key);
             }
         }
+        public static string GetStringID(this Item item) => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
     }
 }

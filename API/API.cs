@@ -13,6 +13,10 @@ namespace AeroCore.API
         #region interface_accessible
         public event Action<ILightingEventArgs> LightingEvent;
         public event Action<IUseItemEventArgs> UseItemEvent;
+        public event Action<IUseObjectEventArgs> UseObjectEvent;
+        public event Action<IHeldItemEventArgs> ItemHeldEvent;
+        public event Action<IHeldItemEventArgs> StopItemHeldEvent;
+
         public void RegisterAction(string name, Action<Farmer, string, Point> action, int cursor = 0)
         {
             Patches.Action.Actions[name] = action;
@@ -64,6 +68,9 @@ namespace AeroCore.API
         internal API() {
             Patches.Lighting.LightingEvent += (e) => LightingEvent?.Invoke(e);
             Patches.UseItem.OnUseItem += (e) => UseItemEvent?.Invoke(e);
+            Patches.UseObject.OnUseObject += (e) => UseObjectEvent?.Invoke(e);
+            Patches.UseItem.OnItemHeld += (e) => ItemHeldEvent?.Invoke(e);
+            Patches.UseItem.OnStopItemHeld += (e) => StopItemHeldEvent?.Invoke(e);
         }
         #endregion internals
     }

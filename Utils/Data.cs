@@ -38,5 +38,19 @@ namespace AeroCore.Utils
             for (int i = 0; i < items.Count; i++)
                 items[i].Dispose();
         }
+        public static void DisposeAll<T>(this IList<T> items)
+        {
+            for (int i = 0; i < items.Count; i++)
+                if(items[i] is IDisposable d)
+                    d.Dispose();
+        }
+        public static IList<T> TransformItems<T>(this IList<T> list, Func<T, T> transformer)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                list[i] = transformer(list[i]);
+            }
+            return list;
+        }
     }
 }

@@ -11,18 +11,16 @@ namespace AeroCore.Generics
         private Func<string> getPath;
         private T cached = default;
         private bool isCached = false;
-        private Func<T> getDefault;
         private IMonitor monitor;
         private bool disposedValue;
 
         public LogLevel errorLevel;
         public T Value => GetAsset();
 
-        public LazyAsset(IModHelper Helper, IMonitor Monitor, Func<string> AssetPath, Func<T> DefaultAsset = null, LogLevel ErrorLevel = LogLevel.Trace)
+        public LazyAsset(IModHelper Helper, IMonitor Monitor, Func<string> AssetPath, LogLevel ErrorLevel = LogLevel.Trace)
         {
             getPath = AssetPath;
             errorLevel = ErrorLevel;
-            getDefault = DefaultAsset;
             helper = Helper;
             monitor = Monitor;
 
@@ -42,16 +40,7 @@ namespace AeroCore.Generics
         {
             if (!isCached)
             {
-                string path = getPath();
-                try
-                {
-                    cached = helper.GameContent.Load<T>(path);
-                }
-                catch (ContentLoadException e)
-                {
-                    monitor.Log($"Could not load asset at path '{path}':\n{e.Message}", errorLevel);
-                    cached = getDefault is not null ? getDefault() : default;
-                }
+                cached = helper.GameContent.Load<T>(getPath());
                 isCached = true;
             }
             return cached;

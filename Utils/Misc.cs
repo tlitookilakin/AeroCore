@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
+using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
@@ -104,5 +106,25 @@ namespace AeroCore.Utils
             }
         }
         public static string GetStringID(this Item item) => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
+        public static bool DisposeIfDisposable(this object obj)
+        {
+            if(obj is not IDisposable d)
+                return false;
+            d.Dispose();
+            return true;
+        }
+        public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
+        {
+            try
+            {
+                asset = helper.GameContent.Load<T>(path);
+            } catch(ContentLoadException e)
+            {
+                mon.Log(ModEntry.i18n.Get("misc.assetLoadFailed", new { Path = path, Msg = e.Message }), LogLevel.Warn);
+                asset = default;
+                return false;
+            }
+            return true;
+        }
     }
 }

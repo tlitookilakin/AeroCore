@@ -13,7 +13,19 @@ namespace AeroCore.Patches
     [HarmonyPatch(typeof(Game1))]
     internal class UseItem
     {
-        public static event Action<IUseItemEventArgs> OnUseItem;
+        internal static event Action<IUseItemEventArgs> OnUseItem;
+        internal static event Action<IHeldItemEventArgs> OnItemHeld;
+        internal static event Action<IHeldItemEventArgs> OnStopItemHeld;
+
+        [HarmonyPatch(typeof(Item),nameof(Item.actionWhenBeingHeld))]
+        [HarmonyPostfix]
+        internal static void ItemHeld(Farmer who, Item __instance)
+            => OnItemHeld?.Invoke(new HeldItemEventArgs(who, __instance));
+
+        [HarmonyPatch(typeof(Item), nameof(Item.actionWhenStopBeingHeld))]
+        [HarmonyPostfix]
+        internal static void ItemStopHeld(Farmer who, Item __instance)
+            => OnStopItemHeld?.Invoke(new HeldItemEventArgs(who, __instance));
 
         [HarmonyPatch(nameof(Game1.pressActionButton))]
         [HarmonyTranspiler]

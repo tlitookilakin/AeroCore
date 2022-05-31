@@ -48,5 +48,6 @@ namespace AeroCore
             Utils.Reflection.mp = mp.GetValue();
         }
         public override object GetApi() => api;
+        public static API.API GetStaticApi() => api;
     }
 }

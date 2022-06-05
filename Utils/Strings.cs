@@ -144,7 +144,6 @@ namespace AeroCore.Utils
                         if (!dquote)
                         {
                             squote = !squote;
-                            skipped++;
                             s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
                             skipped++;
                             skip = i + 1;
@@ -161,7 +160,7 @@ namespace AeroCore.Utils
                         {
                             s[skip..i].CopyTo(prev.AsSpan(skip - skipped));
                             if (!RemoveEmpty || i - last - skipped > 0)
-                                result.Add(prev[last..(i - skipped)].ToString());
+                                result.Add(new string(prev[last..(i - skipped)]));
                             last = i + 1;
                             skip = last;
                             skipped = 0;
@@ -171,37 +170,24 @@ namespace AeroCore.Utils
             }
             s[skip..].CopyTo(prev.AsSpan(skip - skipped));
             if (s.Length - last - skipped > 0)
-                result.Add(prev[last..^skipped].ToString());
+                result.Add(new string(prev[last..^skipped]));
             return result;
         }
-        public static IEnumerable<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
-        public static List<string> SafeSplitList(this string s, char delim, bool RemoveEmpty = false)
-        {
-            List<string> result = new();
-            foreach(var str in s.SafeSplit(delim, RemoveEmpty))
-                result.Add(str);
-            return result;
-        }
+        public static IList<string> SafeSplit(this string s, char delim, bool RemoveEmpty = false) => s.AsSpan().SafeSplit(delim, RemoveEmpty);
 
         /// <summary>Parses a color from a string. Valid formats: #rgb #rgba #rrggbb #rrggbbaa r,g,b r,g,b,a</summary>
         /// <param name="str">The string to parse from</param>
         /// <param name="color">The color parsed, if successful</param>
         /// <returns>Whether or not a color could be parsed from the string</returns>
-        public static bool TryParseColor(string str, out Color color)
+        public static bool TryParseColor(this string str, out Color color)
         {
             color = Color.Transparent;
 
             if (str is null || str.Length == 0)
                 return false;
 
-            if (str.ToLowerInvariant() == "black")
-            {
-                color = Color.Black;
-                return true;
-            }
-
             DColor c = DColor.FromName(str);
-            if (c != DColor.Black)
+            if (c.ToArgb() != 0)
             {
                 color = new(c.R, c.G, c.B, c.A);
                 return true;

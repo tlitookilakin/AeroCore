@@ -2,5 +2,6 @@
 	"misc.lightQuality.ultra": "Ultra",
 	"misc.lightQuality.extreme": "Extreme",
 	"misc.generic.previous": "Previous",
-	"misc.generic.next": "Next"
+	"misc.generic.next": "Next",
+	"misc.generic.cancel": "Cancel"
 }

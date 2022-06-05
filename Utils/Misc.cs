@@ -19,13 +19,13 @@ namespace AeroCore.Utils
         public static Point LocalToGlobal(Point pos) => LocalToGlobal(pos.X, pos.Y);
         public static Vector2 LocalToGlobal(float x, float y) => new(x + Game1.viewport.X, y + Game1.viewport.Y);
         public static Vector2 LocalToGlobal(Vector2 pos) => LocalToGlobal(pos.X, pos.Y);
-        public static IEnumerable<Point> pointsIn(this Rectangle rect)
+        public static IEnumerable<Point> PointsIn(this Rectangle rect)
         {
             for (int x = 0; x < rect.Width; x++)
                 for (int y = 0; y < rect.Height; y++)
                     yield return new Point(x + rect.X, y + rect.Y);
         }
-        public static IList<Point> allPointsIn(this Rectangle rect)
+        public static IList<Point> AllPointsIn(this Rectangle rect)
         {
             var points = new Point[rect.Width * rect.Height];
             for (int x = 0; x < rect.Width; x++)
@@ -64,7 +64,7 @@ namespace AeroCore.Utils
                 return;
             }
 
-            PagedResponses.Value.AddRange(responses);
+            PagedResponses.Value = new(responses);
             PageIndex.Value = 0;
             PagedResponseConfirmed.Value = on_response;
             PagedQuestion.Value = question;
@@ -83,6 +83,8 @@ namespace AeroCore.Utils
             if (PagedResponses.Value.Count > (PageIndex.Value + 1) * 5)
                 visible.Add(new("_nextPage", ModEntry.i18n.Get("misc.generic.next") + '>'));
 
+            visible.Add(new("_cancel", ModEntry.i18n.Get("misc.generic.cancel")));
+
             Game1.currentLocation.createQuestionDialogue(PagedQuestion.Value, visible.ToArray(), HandlePagedResponse);
         }
         private static void HandlePagedResponse(Farmer who, string key)
@@ -99,20 +101,15 @@ namespace AeroCore.Utils
             {
                 PagedResponses.Value.Clear();
                 PageIndex.Value = 0;
-                PagedResponseConfirmed.Value = null;
                 PagedQuestion.Value = null;
                 if(key != "_cancel")
                     PagedResponseConfirmed.Value(who, key);
+                PagedResponseConfirmed.Value = null;
             }
         }
+        public static string GetLocale(this IAssetData data)
+            => new(data.Name.ToString()[data.NameWithoutLocale.ToString().Length..]);
         public static string GetStringID(this Item item) => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
-        public static bool DisposeIfDisposable(this object obj)
-        {
-            if(obj is not IDisposable d)
-                return false;
-            d.Dispose();
-            return true;
-        }
         public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
         {
             try

@@ -17,7 +17,7 @@ namespace AeroCore.API
         public event Action<IHeldItemEventArgs> ItemHeldEvent;
         public event Action<IHeldItemEventArgs> StopItemHeldEvent;
 
-        public void RegisterAction(string name, Action<Farmer, string, Point> action, int cursor = 0)
+        public void RegisterAction(string name, IAeroCoreAPI.ActionHandler action, int cursor = 0)
         {
             Patches.Action.Actions[name] = action;
             ChangeActionCursor(name, cursor);
@@ -35,6 +35,10 @@ namespace AeroCore.API
             else
                 Patches.Action.ActionCursors.Remove(name);
         }
+        public void RegisterTouchAction(string name, IAeroCoreAPI.ActionHandler action)
+            => Patches.TouchAction.Actions.Add(name, action);
+        public void UnregisterTouchAction(string name)
+            => Patches.TouchAction.Actions.Remove(name);
         #endregion interface_accessible
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>

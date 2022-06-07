@@ -1,4 +1,5 @@
-﻿using AeroCore.Utils;
+﻿using AeroCore.API;
+using AeroCore.Utils;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
@@ -16,28 +17,23 @@ namespace AeroCore.Patches
     internal class Action
     {
         internal static readonly Dictionary<string, int> ActionCursors = new(StringComparer.InvariantCultureIgnoreCase);
-        internal static readonly Dictionary<string, Action<Farmer, string, Point>> Actions = new(StringComparer.InvariantCultureIgnoreCase);
+        internal static readonly Dictionary<string, IAeroCoreAPI.ActionHandler> Actions = new(StringComparer.InvariantCultureIgnoreCase);
         private static readonly PerScreen<int> CurrentActionCursor = new();
 
         [HarmonyPatch(typeof(GameLocation),"performAction")]
-        [HarmonyPrefix]
-        internal static bool performAction(string action, Farmer who, ref bool __result, xTile.Dimensions.Location tileLocation)
+        [HarmonyPostfix]
+        internal static void performAction(string action, Farmer who, ref bool __result, GameLocation __instance, xTile.Dimensions.Location tileLocation)
         {
-            if (action == null)
-                return true;
+            if (action == null || !who.IsLocalPlayer)
+                return;
 
             string name = action.GetChunk(' ', 0);
-            if (name == "")
-                return true;
-
             if (!Actions.TryGetValue(name, out var exec))
-                return true;
+                return;
 
             int index = action.IndexOf(' ') + 1;
-
             __result = true;
-            exec(who, index > 0 ? action[index..] : "", new(tileLocation.X, tileLocation.Y));
-            return false;
+            exec(who, index > 0 ? action[index..] : "", new(tileLocation.X, tileLocation.Y), __instance);
         }
 
         [HarmonyPatch(typeof(Game1),"updateCursorTileHint")]

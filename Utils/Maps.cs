@@ -11,7 +11,7 @@ namespace AeroCore.Utils
     public static class Maps
     {
         public static string[] MapPropertyArray(GameLocation loc, string prop) => loc.getMapProperty(prop).Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        public static IEnumerable<(xTile.Tiles.Tile, int, int)> tilesInLayer(Layer layer)
+        public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(Layer layer)
         {
             if (layer == null)
                 yield break;
@@ -28,9 +28,9 @@ namespace AeroCore.Utils
                 }
             }
         }
-        public static IEnumerable<(xTile.Tiles.Tile, int, int)> tilesInLayer(xTile.Map map, string layerName)
+        public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(xTile.Map map, string layerName)
         {
-            foreach (var item in tilesInLayer(map.GetLayer(layerName)))
+            foreach (var item in TilesInLayer(map.GetLayer(layerName)))
                 yield return item;
         }
         public static bool TileHasProperty(this xTile.Tiles.Tile tile, string name, out string prop)
@@ -39,7 +39,7 @@ namespace AeroCore.Utils
             prop = val?.ToString();
             return ret;
         }
-        public static void warpToTempMap(string path, Farmer who)
+        public static void WarpToTempMap(string path, Farmer who)
         {
             GameLocation temp = new(PathUtilities.NormalizeAssetName("Maps/" + path), "Temp");
             temp.map.LoadTileSheets(Game1.mapDisplayDevice);
@@ -56,8 +56,10 @@ namespace AeroCore.Utils
             who.currentLocation = Game1.currentLocation;
             Game1.panScreen(0, 0);
         }
-        public static Point toPoint(this xTile.Dimensions.Location loc) => new(loc.X, loc.Y);
-        public static Rectangle toRect(this xTile.Dimensions.Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
-        public static Point toPoint(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
+        public static Point ToPoint(this xTile.Dimensions.Location loc) => new(loc.X, loc.Y);
+        public static Rectangle ToRect(this xTile.Dimensions.Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+        public static Point ToPoint(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
+        public static Vector2 ToVector2(this xTile.Dimensions.Location loc) => new(loc.X,loc.Y);
+        public static Vector2 ToVector2(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
     }
 }

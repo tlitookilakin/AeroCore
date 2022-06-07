@@ -52,5 +52,20 @@ namespace AeroCore.Utils
             }
             return list;
         }
+        public static V GetOrAdd<K, V>(this IDictionary<K, V> dict, K key, Func<V> add)
+        {
+            if (dict.TryGetValue(key, out V v))
+                return v;
+            v = add();
+            dict.Add(key, v);
+            return v;
+        }
+        public static V GetOrAdd<K, V>(this IDictionary<K, V> dict, K key, V add)
+        {
+            if (dict.TryGetValue(key, out V v))
+                return v;
+            dict.Add(key, v);
+            return add;
+        }
     }
 }

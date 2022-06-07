@@ -1,10 +1,10 @@
-﻿using AeroCore.Models;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace AeroCore.API
 {
@@ -38,10 +38,9 @@ namespace AeroCore.API
         #endregion interface_accessible
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>
-        public void InitAll(Type ModClass)
+        public void InitAll()
         {
-            var ass = ModClass.Assembly;
-            foreach(var type in ass.DefinedTypes)
+            foreach(var type in Assembly.GetCallingAssembly().DefinedTypes)
             {
                 var init = (from n in type.CustomAttributes where n.AttributeType == typeof(ModInitAttribute) select n).FirstOrDefault();
                 if (init is not null)

@@ -107,8 +107,6 @@ namespace AeroCore.Utils
                 PagedResponseConfirmed.Value = null;
             }
         }
-        public static string GetLocale(this IAssetData data)
-            => new(data.Name.ToString()[data.NameWithoutLocale.ToString().Length..]);
         public static string GetStringID(this Item item) => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
         public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
         {

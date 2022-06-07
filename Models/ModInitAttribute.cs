@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace AeroCore.Models
+namespace AeroCore
 {
-    /// <summary>Allows easily initializing static data from <see cref="API.InitAll(Type)"/></summary>
+    /// <summary>Allows easily initializing static data from <see cref="API.InitAll()"/></summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false)]
     public class ModInitAttribute : Attribute
     {

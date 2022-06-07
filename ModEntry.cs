@@ -40,7 +40,7 @@ namespace AeroCore
         {
             if (helper.ModRegistry.IsLoaded("spacechase0.DynamicGameAssets"))
                 DGA = helper.ModRegistry.GetApi<IDGAAPI>("spacechase0.DynamicGameAssets");
-            api.InitAll(typeof(ModEntry));
+            api.InitAll();
             harmony.PatchAll();
         }
         private void EnteredWorld(object _, SaveLoadedEventArgs ev)

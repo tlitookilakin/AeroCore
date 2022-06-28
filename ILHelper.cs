@@ -44,6 +44,7 @@ namespace AeroCore
         {
             this.instructions = instructions;
             generator = Generator;
+            monitor.Log($"Patch '{name}' is now being applied...", LogLevel.Trace);
             return this;
         }
 
@@ -203,7 +204,10 @@ namespace AeroCore
             public bool MoveNext()
             {
                 if (isLastItem)
+                {
+                    owner.monitor.Log($"Patch '{owner.name}' was successfully aplied.", LogLevel.Debug);
                     return false;
+                }
 
                 if (!isSetup)
                 {

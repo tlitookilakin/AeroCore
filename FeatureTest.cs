@@ -26,7 +26,7 @@ namespace AeroCore
         private static void DoLightDraw(LightingEventArgs ev)
         {
             int ts = (int)(64 * ev.scale);
-            ev.batch.Draw(Game1.staminaRect, new Rectangle(ev.GlobalToLocal(tile), new(ts, ts)), Color.Black);
+            ev.batch.Draw(Game1.staminaRect, new Rectangle(ev.GlobalToLocal(tile), new(ts, ts)), Color.White);
             ev.batch.Draw(Game1.staminaRect, new Rectangle(1, 1, 1, 1), Color.Black);
         }
     }

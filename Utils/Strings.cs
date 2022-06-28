@@ -107,8 +107,40 @@ namespace AeroCore.Utils
             if (!name.StartsWith(path, false))
                 return null;
 
+            if (name.IsEquivalentTo(path))
+                return string.Empty;
+
             int count = PathUtilities.GetSegments(path).Length;
-            return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString()).Skip(count));
+            return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString())[count..]);
+        }
+        /// <returns>A copy of the string in lowercase with all whitespace stripped</returns>
+        public static string Normalize(this string str)
+        {
+            var s = str.AsSpan();
+            var r = new Span<char>(new char[s.Length]);
+            int len = 0;
+            int last = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (!char.IsWhiteSpace(s[i]))
+                    continue;
+
+                if (i - last <= 0)
+                {
+                    last = i;
+                    continue;
+                }
+
+                s[last..i].CopyTo(r[len..]);
+                len += last - i;
+                last = i + 1;
+            }
+            if (last < s.Length)
+            {
+                s[last..s.Length].CopyTo(r[len..]);
+                len += s.Length - last;
+            }
+            return new string(r[..len]).ToLowerInvariant();
         }
         public static IList<string> SafeSplit(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
         {

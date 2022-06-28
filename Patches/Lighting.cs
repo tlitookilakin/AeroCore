@@ -18,10 +18,20 @@ namespace AeroCore.Patches
         private static Vector2 offset;
         private static Vector2 v_offset;
 
-        public static MethodBase TargetMethod() => AccessTools.TypeByName("StardewModdingAPI.Framework.SGame").MethodNamed("DrawImpl");
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => patcher.Run(instructions);
+        internal static MethodBase TargetMethod() => AccessTools.TypeByName("StardewModdingAPI.Framework.SGame").MethodNamed("DrawImpl");
+        internal static void Prefix()
+        {
+            Game1.drawLighting = Game1.hasLoadedGame;
+            if (Game1.outdoorLight == Color.White)
+                Game1.outdoorLight = Color.Black;
+        }
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) => patcher.Run(instructions);
 
         private static ILHelper patcher = new ILHelper(ModEntry.monitor, "Lighting")
+            .SkipTo(new CodeInstruction[] {
+                new(OpCodes.Ldsfld, typeof(Game1).FieldNamed(nameof(Game1.drawLighting))),
+                new(OpCodes.Brfalse)
+            })
             .SkipTo(new CodeInstruction[]
             {
                 new(OpCodes.Call, typeof(Game1).MethodNamed("get_lightmap")),
@@ -64,7 +74,6 @@ namespace AeroCore.Patches
                 new(OpCodes.Call, typeof(Lighting).MethodNamed(nameof(EmitEvent)))
             };
         }
-
         internal static void EmitEvent(Color ambient, float intensity)
         {
             GetOffset();

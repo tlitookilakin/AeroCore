@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewValley;
 using System;
 using System.Collections.Generic;
@@ -19,5 +20,6 @@ namespace AeroCore.API
         public void ChangeActionCursor(string name, int which);
         public void RegisterTouchAction(string name, ActionHandler action);
         public void UnregisterTouchAction(string name);
+        public void RegisterGMCMConfig<T>(IManifest who, IModHelper helper, T config, Action ConfigChanged = null, bool TitleScreenOnly = false) where T : class, new();
     }
 }

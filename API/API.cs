@@ -165,7 +165,7 @@ namespace AeroCore.API
                             );
             }
         }
-        #endregion interface_accessible
+
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>
         public void InitAll()
@@ -184,6 +184,7 @@ namespace AeroCore.API
                 }
             }
         }
+        #endregion interface_accessible
         #region internals
         private static IGMCMAPI gmcm;
         private static readonly Dictionary<IManifest, Dictionary<PropertyInfo, object>> defaultConfigValues = new();

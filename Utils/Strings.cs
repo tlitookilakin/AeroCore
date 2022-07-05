@@ -32,16 +32,16 @@ namespace AeroCore.Utils
             point = new();
             return false;
         }
-        public static bool ToVec2(this string[] strings, out Vector2 vec, int offset = 0)
+        public static bool ToVector2(this string[] strings, out Vector2 vec, int offset = 0)
         {
             if (offset + 1 >= strings.Length)
             {
                 vec = new();
                 return false;
             }
-            return ToVec2(strings[offset], strings[offset + 1], out vec);
+            return ToVector2(strings[offset], strings[offset + 1], out vec);
         }
-        public static bool ToVec2(string x, string y, out Vector2 vec)
+        public static bool ToVector2(string x, string y, out Vector2 vec)
         {
             if (float.TryParse(x, out float xx) && float.TryParse(y, out float yy))
             {

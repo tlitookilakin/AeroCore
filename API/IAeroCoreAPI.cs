@@ -40,7 +40,7 @@ namespace AeroCore.API
 
         /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
         /// <param name="ModClass">Any type from your mod</param>
-        public void InitAll();
+        public void InitAll(params object[] args);
 
         /// <summary>Builds and registers a config with GMCM if it is installed. Can be enhanced with attributes.</summary>
         /// <typeparam name="T">The config type</typeparam>

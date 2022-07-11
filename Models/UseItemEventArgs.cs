@@ -14,21 +14,36 @@ namespace AeroCore.Models
         public bool IsTool { get; }
         public Item Item { get; }
         public string ItemStringID { get; }
+        public int ToolPower { get; }
         public bool IsHandled
         {
             get => isHandled;
             set => isHandled = value || isHandled;
         }
+        public bool ConsumeItem { get; set; } = true;
+
         private bool isHandled = false;
 
-        internal UseItemEventArgs(bool isTool, Item what)
+        internal UseItemEventArgs(Item what)
         {
             Where = Game1.currentLocation;
             Who = Game1.player;
             NormalGameplay = GetIsNormalGameplay();
             Item = what;
-            IsTool = isTool;
+            IsTool = false;
             Tile = Who.getTileLocationPoint();
+            ItemStringID = Item.GetStringID();
+            ToolPower = 0;
+        }
+        internal UseItemEventArgs(Tool what, Point tile, Farmer who, GameLocation where, int power)
+        {
+            IsTool = true;
+            Where = where;
+            Who = who;
+            Tile = tile;
+            ToolPower = power;
+            Item = what;
+            NormalGameplay = GetIsNormalGameplay();
             ItemStringID = Item.GetStringID();
         }
         private static bool GetIsNormalGameplay()

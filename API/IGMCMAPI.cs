@@ -7,7 +7,7 @@ using System;
 
 namespace AeroCore.API
 {
-    internal interface IGMCMAPI
+    public interface IGMCMAPI
     {
         /*********
         ** Methods

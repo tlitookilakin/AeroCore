@@ -165,12 +165,40 @@ namespace AeroCore
             actionQueue.Add((8, (opcode, where)));
             return this;
         }
+
+        /// <summary>Add a set of instructions, and attach a set of labels to the first one</summary>
+        /// <param name="instructions">The instructions to add</param>
+        /// <param name="labels">The labels to attach</param>
+        public ILHelper AddWithLabels(IList<CodeInstruction> instructions, IList<string> labels)
+        {
+            actionQueue.Add((9, (instructions, labels)));
+            return this;
+        }
+
+        /// <summary>Add a set of instructions, and attach a label to the first one</summary>
+        /// <param name="instructions">The instructions to add</param>
+        /// <param name="label">The label to attach</param>
+        public ILHelper AddWithLabels(IList<CodeInstruction> instructions, string label)
+            => AddWithLabels(instructions, new[] { label });
+
+        /// <summary>Add an instruction, and attach a label to it</summary>
+        /// <param name="instruction">The instruction to add</param>
+        /// <param name="label">The label to attach</param>
+        public ILHelper AddWithLabels(CodeInstruction instruction, string label)
+            => AddWithLabels(new[] {instruction}, new[] {label});
+
+        /// <summary>Add an instruction, and attach a set of labels to it</summary>
+        /// <param name="instruction">The instruction to add</param>
+        /// <param name="labels">The labels to attach</param>
+        public ILHelper AddWithLabels(CodeInstruction instruction, IList<string> labels)
+            => AddWithLabels(new[] {instruction}, labels);
+
         #endregion queue
 
         public class ILEnumerator : IEnumerator<CodeInstruction>
         {
             private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
-            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump};
+            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump, AddWithLabels};
 
             private bool disposedValue;
             public readonly BufferedEnumerator<CodeInstruction> source;
@@ -318,6 +346,11 @@ namespace AeroCore
                         jumpCode = what;
                         labelsToAdd = new string[] {where};
                         break;
+                    case 9:
+                        var (codes, labels) = ((IList<CodeInstruction>, IList<string>))arg;
+                        labelsToAdd = labels;
+                        anchors = codes;
+                        break;
                 }
 
                 modeIndex++;
@@ -412,6 +445,21 @@ namespace AeroCore
                 result = inst.anchors[inst.marker];
                 inst.marker++;
                 return false;
+            }
+            private static bool AddWithLabels(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker == 0)
+                {
+                    if (inst.anchors.Count <= 0)
+                        return Add(inst, ref result);
+                    var what = inst.anchors[inst.marker];
+                    foreach (string id in inst.labelsToAdd)
+                        if (inst.labels.TryGetValue(id, out var label))
+                            what.labels.Add(label);
+                        else
+                            inst.error($"Label with id '{id}' has not been created and does not exist");
+                }
+                return Add(inst, ref result);
             }
             private static bool AddLabels(ILEnumerator inst, ref CodeInstruction result)
             {

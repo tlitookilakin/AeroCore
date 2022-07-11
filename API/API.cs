@@ -165,10 +165,7 @@ namespace AeroCore.API
                             );
             }
         }
-
-        /// <summary>Initializes all <see cref="ModInitAttribute"/> marked classes in your mod</summary>
-        /// <param name="ModClass">Any type from your mod</param>
-        public void InitAll()
+        public void InitAll(params object[] args)
         {
             foreach(var type in Assembly.GetCallingAssembly().DefinedTypes)
             {
@@ -180,7 +177,7 @@ namespace AeroCore.API
                         continue;
                     var m = AccessTools.DeclaredMethod(type, method);
                     if (m is not null && m.IsStatic)
-                        m.Invoke(null, Array.Empty<object>());
+                        m.Invoke(null, args);
                 }
             }
         }

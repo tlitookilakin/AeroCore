@@ -7,15 +7,51 @@ using SObject = StardewValley.Object;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using AeroCore.API;
+using StardewModdingAPI.Utilities;
+using Microsoft.Xna.Framework;
+using System.Linq;
 
 namespace AeroCore.Patches
 {
+    [ModInit]
     [HarmonyPatch(typeof(Game1))]
     internal class UseItem
     {
         internal static event Action<IUseItemEventArgs> OnUseItem;
         internal static event Action<IHeldItemEventArgs> OnItemHeld;
         internal static event Action<IHeldItemEventArgs> OnStopItemHeld;
+        private static readonly PerScreen<bool> ConsumeItem = new();
+
+        internal static void Init()
+        {
+            ModEntry.monitor.Log("Prefixing DoFunction on all Tools...");
+            var ToolTypes = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(
+                (ass) => {
+                    try {
+                        return ass.GetTypes();
+                    } catch {
+                        return Array.Empty<Type>();
+                    }
+                })
+                .Where(b => b.IsAssignableTo(typeof(Tool)));
+
+            foreach(var type in ToolTypes)
+            {
+                var func = AccessTools.DeclaredMethod(type, "DoFunction");
+                if (func is not null)
+                    ModEntry.harmony.Patch(func, prefix: new(typeof(UseItem).MethodNamed(nameof(UseTool))));
+            }
+            ModEntry.monitor.Log("Tool Prefixing complete!");
+        }
+
+        private static bool UseTool(Tool __instance, Farmer who, int x, int y, int power, GameLocation location)
+        {
+            UseItemEventArgs ev = new(__instance, new(x, y), who, location, power);
+            OnUseItem?.Invoke(ev);
+            ConsumeItem.Value = false;
+            return !ev.IsHandled;
+        }
 
         [HarmonyPatch(typeof(Item),nameof(Item.actionWhenBeingHeld))]
         [HarmonyPostfix]
@@ -31,10 +67,6 @@ namespace AeroCore.Patches
         [HarmonyTranspiler]
         internal static IEnumerable<CodeInstruction> UseObject(IEnumerable<CodeInstruction> codes, ILGenerator gen) => objectUsePatch.Run(codes, gen);
 
-        [HarmonyPatch(nameof(Game1.pressUseToolButton))]
-        [HarmonyTranspiler]
-        internal static IEnumerable<CodeInstruction> UseTool(IEnumerable<CodeInstruction> codes, ILGenerator gen) => toolUsePatch.Run(codes, gen);
-
         private static readonly ILHelper objectUsePatch = new ILHelper(ModEntry.monitor, "Use Item: Object")
             .SkipTo(new CodeInstruction[]
             {
@@ -48,29 +80,19 @@ namespace AeroCore.Patches
             )
             .AddJump(OpCodes.Brtrue, "activated")
             .Skip(5)
-            .AddLabel("activated")
-            .Finish();
-
-        private static readonly ILHelper toolUsePatch = new ILHelper(ModEntry.monitor, "Use Item: Tool")
             .SkipTo(new CodeInstruction[]
             {
                 new(OpCodes.Call, typeof(Game1).PropertyGetter(nameof(Game1.player))),
-                new(OpCodes.Callvirt, typeof(Farmer).PropertyGetter(nameof(Farmer.CurrentTool))),
-                new(OpCodes.Call, typeof(Game1).PropertyGetter(nameof(Game1.player))),
-                new(OpCodes.Callvirt, typeof(Character).PropertyGetter(nameof(Character.currentLocation))),
-                new(OpCodes.Call, typeof(Game1).PropertyGetter(nameof(Game1.player))),
-                new(OpCodes.Ldflda, typeof(Character).FieldNamed(nameof(Character.lastClick)))
+                new(OpCodes.Callvirt, typeof(Farmer).MethodNamed(nameof(Farmer.reduceActiveItemByOne)))
             })
-            .Add(
-                new CodeInstruction(OpCodes.Call, typeof(UseItem).MethodNamed(nameof(ActivateTool)))
-            )
-            .AddJump(OpCodes.Brtrue, "activated")
-            .SkipTo(new CodeInstruction[]
+            .AddWithLabels(new CodeInstruction[]
             {
-                new(OpCodes.Ldc_I4_1),
-                new(OpCodes.Ret)
-            })
-            .AddLabel("activated")
+                new(OpCodes.Ldsfld, typeof(UseItem).FieldNamed(nameof(ConsumeItem))),
+                new(OpCodes.Callvirt, typeof(PerScreen<bool>).PropertyGetter(nameof(PerScreen<bool>.Value)))
+            }, new[] {"activated"})
+            .AddJump(OpCodes.Brfalse, "no_consume")
+            .Skip(2)
+            .AddLabel("no_consume")
             .Finish();
 
         private static bool ActivateObject()
@@ -78,15 +100,12 @@ namespace AeroCore.Patches
             var who = Game1.player;
             if(!who.canMove || who.ActiveObject.isTemporarilyInvisible)
                 return false;
-            var ev = new UseItemEventArgs(false, who.ActiveObject);
+            var ev = new UseItemEventArgs(who.ActiveObject);
             OnUseItem?.Invoke(ev);
+            ConsumeItem.Value = ev.ConsumeItem;
             return ev.IsHandled;
         }
-        private static bool ActivateTool()
-        {
-            var ev = new UseItemEventArgs(true, Game1.player.CurrentTool);
-            OnUseItem?.Invoke(ev);
-            return ev.IsHandled;
-        }
+        private static bool ShouldConsume()
+            => ConsumeItem.Value;
     }
 }

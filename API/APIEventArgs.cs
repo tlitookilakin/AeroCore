@@ -35,6 +35,8 @@ namespace AeroCore.API
         public Item Item { get; }
         public bool IsHandled { get; set; }
         public string ItemStringID { get; }
+        public bool ConsumeItem { get; set; }
+        public int ToolPower { get; }
     }
     public interface IUseObjectEventArgs
     {

@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AeroCore.Particles;
+using Microsoft.Xna.Framework;
+using Newtonsoft.Json.Linq;
 using StardewModdingAPI;
 using StardewValley;
 using System;
@@ -48,5 +50,23 @@ namespace AeroCore.API
         /// <param name="ConfigChanged">An action that is executed whenever settings are changed for this config</param>
         /// <param name="TitleScreenOnly">Whether or not it should only be available on the title screen</param>
         public void RegisterGMCMConfig<T>(IManifest who, IModHelper helper, T config, Action ConfigChanged = null, bool TitleScreenOnly = false) where T : class, new();
+
+        /// <summary>Registers a custom behavior type which can be used by particle systems</summary>
+        public void RegisterParticleBehavior(string name, Func<int, IParticleBehavior> factory);
+
+        /// <summary>Regiosters a custom skin type which can be used by particle systems</summary>
+        public void RegisterParticleSkin(string name, Func<int, IParticleSkin> factory);
+
+        /// <summary>Creates a new particle system</summary>
+        public IParticleManager CreateParticleSystem(string behavior, object behaviorArgs, string skin, object skinArgs, IParticleEmitter emitter, int count);
+
+        /// <summary>Creates a new particle system from a game data asset</summary>
+        public IParticleManager CreateParticleSystem(IGameContentHelper helper, string path, IParticleEmitter emitter, int count);
+
+        /// <summary>Creates a new particle system from a mod data asset</summary>
+        public IParticleManager CreateParticleSystem(IModContentHelper helper, string path, IParticleEmitter emitter, int count);
+
+        /// <summary>Creates a new particle system from a json object</summary>
+        public IParticleManager CreateParticleSystem(JObject json, IParticleEmitter emitter, int count);
     }
 }

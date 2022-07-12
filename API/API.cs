@@ -1,6 +1,10 @@
-﻿using HarmonyLib;
+﻿using AeroCore.Models;
+using AeroCore.Particles;
+using AeroCore.Utils;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Newtonsoft.Json.Linq;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
@@ -183,10 +187,31 @@ namespace AeroCore.API
                 }
             }
         }
+        public void RegisterParticleBehavior(string name, Func<int, IParticleBehavior> factory)
+            => knownPartBehaviors.Add(name, factory);
+
+        public void RegisterParticleSkin(string name, Func<int, IParticleSkin> factory)
+            => knownPartSkins.Add(name, factory);
+
+        public IParticleManager CreateParticleSystem(string behavior, object behaviorArgs, string skin, object skinArgs, IParticleEmitter emitter, int count)
+            => ParticleDefinition.Create(behavior, skin, behaviorArgs, skinArgs, emitter, count);
+
+        public IParticleManager CreateParticleSystem(IGameContentHelper helper, string path, IParticleEmitter emitter, int count)
+            => helper.Load<ParticleDefinition>(path).Create(emitter, count);
+
+        public IParticleManager CreateParticleSystem(IModContentHelper helper, string path, IParticleEmitter emitter, int count)
+            => helper.Load<ParticleDefinition>(path).Create(emitter, count);
+
+        public IParticleManager CreateParticleSystem(JObject json, IParticleEmitter emitter, int count)
+            => json.ToObject<ParticleDefinition>().Create(emitter, count);
+
         #endregion interface_accessible
         #region internals
+
         private static IGMCMAPI gmcm;
         private static readonly Dictionary<IManifest, Dictionary<PropertyInfo, object>> defaultConfigValues = new();
+        internal static readonly Dictionary<string, Func<int, IParticleBehavior>> knownPartBehaviors = new();
+        internal static readonly Dictionary<string, Func<int, IParticleSkin>> knownPartSkins = new();
         internal API() {
             Patches.Lighting.LightingEvent += (e) => LightingEvent?.Invoke(e);
             Patches.UseItem.OnUseItem += (e) => UseItemEvent?.Invoke(e);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -64,6 +65,22 @@ namespace AeroCore.Utils
                 return v;
             dict.Add(key, v);
             return add;
+        }
+
+        public static void Clear(this Array arr)
+            => Array.Clear(arr, 0, arr.Length);
+
+        public static Vector2 DirLength(float angle, float length)
+            => new(MathF.Cos(angle) * length, MathF.Sin(angle) * length);
+        public static float DegToRad(float angle)
+            => angle / 360F * MathF.Tau;
+        public static double DegToRad(double angle)
+            => angle / 360F * Math.Tau;
+        public static Vector2 Rotate(this Vector2 vec, float angle)
+        {
+            vec.X = vec.X * MathF.Cos(angle) - vec.Y * MathF.Sin(angle);
+            vec.Y = vec.X * MathF.Sin(angle) + vec.Y * MathF.Cos(angle);
+            return vec;
         }
     }
 }

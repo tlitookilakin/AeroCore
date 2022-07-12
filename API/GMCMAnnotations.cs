@@ -27,10 +27,10 @@ namespace AeroCore.API
     {
         public float? Min { get; set; } = null;
         public float? Max { get; set; } = null;
-        public GMCMRangeAttribute(float? min = null, float? max = null)
+        public GMCMRangeAttribute(float min = float.NegativeInfinity, float max = float.PositiveInfinity)
         {
-            Min = min;
-            Max = max;
+            Min = float.IsInfinity(min) ? null : min;
+            Max = float.IsInfinity(max) ? null : max;
         }
         public GMCMRangeAttribute(int min = 0, int max = 1) : this((float)min, (float)max) { }
     }
@@ -57,6 +57,24 @@ namespace AeroCore.API
         public GMCMImageAttribute(string path, int scale) : this(path)
         {
             Scale = scale;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Property)]
+    public class GMCMIntervalAttribute : Attribute
+    {
+        public float? Interval { get; set; }
+        public GMCMIntervalAttribute(float interval)
+        {
+            Interval = interval;
+        }
+        public GMCMIntervalAttribute(int interval)
+        {
+            Interval = interval;
+        }
+        public GMCMIntervalAttribute()
+        {
+            Interval = null;
         }
     }
 }

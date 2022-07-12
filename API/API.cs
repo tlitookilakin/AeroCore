@@ -129,7 +129,8 @@ namespace AeroCore.API
                                 (f) => option.SetValue(config, f),
                                 () => i18n.Get($"config.{option.Name}.label"),
                                 () => i18n.Get($"config.{option.Name}.desc"),
-                                range?.Min, range?.Max
+                                range?.Min, range?.Max,
+                                option.GetCustomAttribute<GMCMIntervalAttribute>()?.Interval ?? .01f
                             );
                         } else if (t == typeof(int))
                         {
@@ -139,7 +140,8 @@ namespace AeroCore.API
                                 (i) => option.SetValue(config, i),
                                 () => i18n.Get($"config.{option.Name}.label"),
                                 () => i18n.Get($"config.{option.Name}.desc"),
-                                (int?)range?.Min, (int?)range?.Max
+                                (int?)range?.Min, (int?)range?.Max,
+                                (int?)option.GetCustomAttribute<GMCMIntervalAttribute>()?.Interval ?? 1
                             );
                         } else if (t == typeof(KeybindList))
                         {

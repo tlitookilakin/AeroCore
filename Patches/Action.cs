@@ -40,13 +40,10 @@ namespace AeroCore.Patches
         [HarmonyPostfix]
         internal static void changeActionCursor()
         {
+            CurrentActionCursor.Value = 0;
             string action = Game1.currentLocation.doesTileHaveProperty((int)Game1.lastCursorTile.X, (int)Game1.lastCursorTile.Y, "Action", "Buildings");
-            if (action is null)
-                return;
-            if (ActionCursors.TryGetValue(action.GetChunk(' ', 0), out var cursor))
+            if (action is not null && ActionCursors.TryGetValue(action.GetChunk(' ', 0), out var cursor))
                 CurrentActionCursor.Value = cursor;
-            else
-                CurrentActionCursor.Value = 0;
         }
 
         [HarmonyPatch(typeof(Game1), "drawMouseCursor")]

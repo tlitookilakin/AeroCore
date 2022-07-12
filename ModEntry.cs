@@ -17,6 +17,7 @@ namespace AeroCore
         internal static string ModID;
         internal static API.API api;
         internal static IDGAAPI DGA;
+        internal static Config Config;
 
         private IReflectedField<Multiplayer> mp;
 
@@ -30,6 +31,7 @@ namespace AeroCore
             ModID = ModManifest.UniqueID;
             api = new();
             i18n = helper.Translation;
+            Config = helper.ReadConfig<Config>();
 
             mp = helper.Reflection.GetField<Multiplayer>(typeof(Game1), "multiplayer");
 
@@ -40,6 +42,7 @@ namespace AeroCore
         {
             if (helper.ModRegistry.IsLoaded("spacechase0.DynamicGameAssets"))
                 DGA = helper.ModRegistry.GetApi<IDGAAPI>("spacechase0.DynamicGameAssets");
+            api.RegisterGMCMConfig(ModManifest, Helper, Config, ConfigUpdated);
             api.InitAll();
             harmony.PatchAll();
         }
@@ -49,5 +52,10 @@ namespace AeroCore
         }
         public override object GetApi() => api;
         public static API.API GetStaticApi() => api;
+        private static void ConfigUpdated()
+        {
+            if (Config.CursorLightHold)
+                User.CursorLight.isLightActive = false;
+        }
     }
 }

@@ -92,7 +92,8 @@ namespace AeroCore.API
 
                 foreach((var sname, var section) in page)
                 {
-                    gmcm.AddSectionTitle(who, () => i18n.Get($"config.{sname}.header"));
+                    if (sname != string.Empty)
+                        gmcm.AddSectionTitle(who, () => i18n.Get($"config.{sname}.header"));
                     foreach(var option in section)
                     {
                         var img = option.GetCustomAttribute<GMCMImageAttribute>();

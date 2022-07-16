@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Content;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.Buildings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,6 +121,13 @@ namespace AeroCore.Utils
                 return false;
             }
             return true;
+        }
+        public static IEnumerable<Building> GetAllBuildings()
+        {
+            if (!Game1.hasLoadedGame || Game1.getFarm() is null)
+                return Array.Empty<Building>();
+
+            return Game1.getFarm().buildings;
         }
     }
 }

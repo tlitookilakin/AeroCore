@@ -90,16 +90,14 @@ namespace AeroCore.Utils
                 return str[z..i];
             return "";
         }
-        public static string IterableToString(this IEnumerable<object> iter)
+        public static string ContentsToString(this IEnumerable<object> iter, string separator = ", ")
         {
             StringBuilder sb = new();
-            sb.Append('[');
             foreach (object item in iter)
             {
                 sb.Append(item.ToString());
-                sb.Append(", ");
+                sb.Append(separator);
             }
-            sb.Append(']');
             return sb.ToString();
         }
         public static string WithoutPath(this IAssetName name, string path)
@@ -113,8 +111,8 @@ namespace AeroCore.Utils
             int count = PathUtilities.GetSegments(path).Length;
             return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString())[count..]);
         }
-        /// <returns>A copy of the string in lowercase with all whitespace stripped</returns>
-        public static string Normalize(this string str)
+        /// <returns>A copy of the string with all whitespace stripped</returns>
+        public static string Collapse(this string str)
         {
             var s = str.AsSpan();
             var r = new Span<char>(new char[s.Length]);
@@ -125,22 +123,22 @@ namespace AeroCore.Utils
                 if (!char.IsWhiteSpace(s[i]))
                     continue;
 
-                if (i - last <= 0)
+                if (i - last <= 1)
                 {
-                    last = i;
+                    last = i + 1;
                     continue;
                 }
 
                 s[last..i].CopyTo(r[len..]);
-                len += last - i;
+                len += i - last;
                 last = i + 1;
             }
             if (last < s.Length)
             {
-                s[last..s.Length].CopyTo(r[len..]);
+                s[last..].CopyTo(r[len..]);
                 len += s.Length - last;
             }
-            return new string(r[..len]).ToLowerInvariant();
+            return new string(r[..len]);
         }
         public static IList<string> SafeSplit(this ReadOnlySpan<char> s, char delim, bool RemoveEmpty = false)
         {

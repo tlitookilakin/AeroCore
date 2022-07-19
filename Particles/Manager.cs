@@ -44,7 +44,7 @@ namespace AeroCore.Particles
         {
             if(isSetup)
                 if(ClipRegion is null || Game1.viewport.ToRect().Intersects((Rectangle)ClipRegion))
-                    skin.Draw(batch, positions, life, millis, Scale, Offset, Depth);
+                    skin.Draw(batch, positions, life, Scale, Offset, Depth);
             else
                 ModEntry.monitor.LogOnce($"Particle Emitter was not ticked before attempting to draw!", LogLevel.Warn);
         }
@@ -54,6 +54,9 @@ namespace AeroCore.Particles
             this.millis = millis;
             if (!isSetup)
                 Setup();
+            for (int i = 0; i < positions.Length; i++)
+                if (life[i] == 1)
+                    life[i] = millis;
             emitter.Tick(ref positions, ref life, millis);
             behavior.Tick(ref positions, ref life, millis);
         }

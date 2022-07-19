@@ -8,12 +8,14 @@ namespace AeroCore.Particles
         public void Tick(ref Vector2[] positions, ref int[] life, int millis);
         public void Cleanup();
         public void Startup();
+        public void Init(int count);
     }
     public interface IParticleSkin
     {
         public void Draw(SpriteBatch batch, Vector2[] positions, int[] life, Vector2 scale, Vector2 offset = new(), float depth = 0f);
         public void Cleanup();
         public void Startup();
+        public void Init(int count);
     }
     public interface IParticleManager
     {

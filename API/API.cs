@@ -188,10 +188,10 @@ namespace AeroCore.API
                 }
             }
         }
-        public void RegisterParticleBehavior(string name, Func<int, IParticleBehavior> factory)
+        public void RegisterParticleBehavior(string name, Func<IParticleBehavior> factory)
             => knownPartBehaviors.Add(name, factory);
 
-        public void RegisterParticleSkin(string name, Func<int, IParticleSkin> factory)
+        public void RegisterParticleSkin(string name, Func<IParticleSkin> factory)
             => knownPartSkins.Add(name, factory);
 
         public IParticleManager CreateParticleSystem(string behavior, object behaviorArgs, string skin, object skinArgs, IParticleEmitter emitter, int count)
@@ -211,14 +211,17 @@ namespace AeroCore.API
 
         private static IGMCMAPI gmcm;
         private static readonly Dictionary<IManifest, Dictionary<PropertyInfo, object>> defaultConfigValues = new();
-        internal static readonly Dictionary<string, Func<int, IParticleBehavior>> knownPartBehaviors = new();
-        internal static readonly Dictionary<string, Func<int, IParticleSkin>> knownPartSkins = new();
+        internal static readonly Dictionary<string, Func<IParticleBehavior>> knownPartBehaviors = new(StringComparer.OrdinalIgnoreCase);
+        internal static readonly Dictionary<string, Func<IParticleSkin>> knownPartSkins = new(StringComparer.OrdinalIgnoreCase);
         internal API() {
             Patches.Lighting.LightingEvent += (e) => LightingEvent?.Invoke(e);
             Patches.UseItem.OnUseItem += (e) => UseItemEvent?.Invoke(e);
             Patches.UseObject.OnUseObject += (e) => UseObjectEvent?.Invoke(e);
             Patches.UseItem.OnItemHeld += (e) => ItemHeldEvent?.Invoke(e);
             Patches.UseItem.OnStopItemHeld += (e) => StopItemHeldEvent?.Invoke(e);
+
+            knownPartBehaviors.Add("simple", () => new SimpleBehavior());
+            knownPartSkins.Add("simple", () => new SimpleSkin());
         }
         internal static void ResetConfig(IManifest which, object config)
         {

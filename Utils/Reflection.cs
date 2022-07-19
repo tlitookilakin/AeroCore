@@ -116,6 +116,39 @@ namespace AeroCore.Utils
             foreach ((k key, v val) in helper.Load<Dictionary<k, v>>(path))
                 model[key] = val;
         }
+        public static bool TryConvertType(object what, Type to, out object converted)
+        {
+            if (what is null)
+            {
+                converted = null;
+                return !to.IsValueType; // value types can't be null
+            }
+
+            var type = what.GetType();
+            var op_implicit = to.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Where(mi =>
+                {
+                    var pi = mi.GetParameters().FirstOrDefault();
+                    return mi.Name == "op_Implicit" &&
+                    mi.ReturnType == to &&
+                    pi != null && pi.ParameterType == type;
+                }).FirstOrDefault();
+            if (op_implicit is not null)
+            {
+                converted = op_implicit.Invoke(to, new[] { what });
+                return true;
+            }
+            try
+            {
+                converted = Convert.ChangeType(what, to);
+                return true;
+            }
+            catch (Exception)
+            {
+                converted = default;
+                return false;
+            }
+        }
         public static T MapTo<T>(this IDictionary<string, JToken> dict, T obj)
         {
             Type type = obj.GetType();
@@ -130,19 +163,47 @@ namespace AeroCore.Utils
         }
         public static T MapTo<T>(T obj, object args)
         {
+            if (args is JObject jo)
+                return (T)jo.ToObject(obj.GetType());
+            else if(args.GetType() == obj.GetType())
+                return (T)args;
+
             var type = obj.GetType();
-            var allflag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-            foreach (var field in args.GetType().GetFields(allflag))
+            var allflag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
+            var props = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var f in type.GetFields(allflag))
+                if (!f.IsInitOnly && !f.IsLiteral) // const and readonly
+                    props[f.Name] = f;
+            foreach (var p in type.GetProperties(allflag))
+                if (p.CanWrite) // writeable
+                    props[p.Name] = p;
+
+            ModEntry.monitor.Log(args.GetType().ToString());
+
+            foreach (var member in args.GetType().GetMembers(allflag))
             {
-                var f = type.FieldNamed(field.Name);
-                if (f is not null && field.FieldType.IsAssignableTo(f.FieldType) && !field.IsInitOnly && !field.IsLiteral)
-                    f.SetValue(obj, field.GetValue(args));
-            }
-            foreach (var prop in args.GetType().GetProperties(allflag))
-            {
-                var p = AccessTools.Property(type, prop.Name);
-                if (p is not null && prop.PropertyType.IsAssignableTo(p.PropertyType) && prop.CanWrite)
-                    p.SetValue(obj, prop.GetValue(args));
+                if (member.MemberType is not (MemberTypes.Field or MemberTypes.Property))
+                    continue;
+                if (member.MemberType == MemberTypes.Property && !((PropertyInfo)member).CanRead)
+                    continue;
+                if (!props.TryGetValue(member.Name, out var target))
+                    continue;
+
+                object val = (member.MemberType == MemberTypes.Field) ? ((FieldInfo)member).GetValue(obj) : ((PropertyInfo)member).GetValue(obj);
+                object current = (target is FieldInfo) ? ((FieldInfo)target).GetValue(obj) : ((PropertyInfo)target).GetValue(obj);
+                var sourceType = (member.MemberType == MemberTypes.Field) ? ((FieldInfo)member).FieldType : ((PropertyInfo)member).PropertyType;
+                var targetType = (target is FieldInfo) ? ((FieldInfo)target).FieldType : ((PropertyInfo)target).PropertyType;
+
+                if (!sourceType.IsAssignableTo(targetType)) // if it can't be directly assigned
+                    if (TryConvertType(val, targetType, out var con)) // implicit conversion
+                        val = con;
+                    else // try map
+                        val = MapTo(current ?? Activator.CreateInstance(targetType), val);
+                if (target is FieldInfo field)
+                    field.SetValue(obj, val);
+                else
+                    ((PropertyInfo)target).SetValue(obj, val);
             }
             return obj;
         }

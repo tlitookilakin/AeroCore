@@ -15,7 +15,6 @@ namespace AeroCore.Particles
 
         private int[] life;
         private Vector2[] positions;
-        private int millis;
         private readonly IParticleBehavior behavior;
         private readonly IParticleSkin skin;
         private readonly Emitter emitter;
@@ -28,13 +27,14 @@ namespace AeroCore.Particles
             positions = new Vector2[count];
             this.skin = skin;
             this.emitter = emitter is Emitter e ? e : new(emitter);
+            this.behavior.Init(count);
+            this.skin.Init(count);
         }
 
         public void Cleanup()
         {
             skin.Cleanup();
             behavior.Cleanup();
-            millis = 0;
             isSetup = false;
             life.Clear();
             positions.Clear();
@@ -51,7 +51,6 @@ namespace AeroCore.Particles
 
         public void Tick(int millis)
         {
-            this.millis = millis;
             if (!isSetup)
                 Setup();
             for (int i = 0; i < positions.Length; i++)
@@ -65,6 +64,7 @@ namespace AeroCore.Particles
             emitter.Reset();
             behavior.Startup();
             skin.Startup();
+            isSetup = true;
         }
     }
 }

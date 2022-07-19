@@ -7,13 +7,8 @@ using System.Collections.Generic;
 
 namespace AeroCore.Particles
 {
-    [ModInit]
     public class SimpleSkin : IParticleSkin
     {
-        internal static void Init()
-        {
-            API.API.knownPartSkins.Add("simple", (c) => new SimpleSkin(c));
-        }
 
         public string Texture
         {
@@ -59,7 +54,7 @@ namespace AeroCore.Particles
         private int[] frames;
         private Vector2 origin;
 
-        public SimpleSkin(int count)
+        public void Init(int count)
         {
             variant = new int[count];
             spin = new float[count];
@@ -106,7 +101,7 @@ namespace AeroCore.Particles
                     texture,
                     positions[i] + offset,
                     regions[i],
-                    Color.Lerp(ColorAt(whichc), ColorAt(whichc + 1), clife % ColorTime),
+                    Color.Lerp(ColorAt(whichc), ColorAt(whichc + 1), (clife % ColorTime)/(float)ColorTime),
                     spin[i] * clife,
                     origin,
                     scales[i] * scale,

@@ -5,14 +5,8 @@ using System;
 
 namespace AeroCore.Particles
 {
-    [ModInit]
     public class SimpleBehavior : IParticleBehavior
     {
-        internal static void Init()
-        {
-            API.API.knownPartBehaviors.Add("simple", (c) => new SimpleBehavior(c));
-        }
-
         public float Direction { get; set; } = 0f;
         public float DirectionVariance { get; set; } = 0f;
         public int MinSpeed { get; set; } = 16;
@@ -29,7 +23,7 @@ namespace AeroCore.Particles
         private double[] curve;
         private float[] acceleration;
 
-        public SimpleBehavior(int count)
+        public void Init(int count)
         {
             speed = new Vector2[count];
             lifetime = new int[count];
@@ -61,9 +55,8 @@ namespace AeroCore.Particles
                     float dir = (float)Game1.random.NextDouble() * DirectionVariance * 2f - DirectionVariance + Direction;
                     speed[i] = Data.DirLength(Data.DegToRad(dir), spd);
                     lifetime[i] = Game1.random.Next(MinLife, MaxLife) * 1000;
-                    curve[i] = Data.DegToRad(Game1.random.NextDouble() * (MaxCurve - MinCurve) + MinCurve);
+                    curve[i] = Data.DegToRad(Game1.random.NextDouble() * (MaxCurve - MinCurve) + MinCurve) / 1000f;
                     acceleration[i] = (float)Game1.random.NextDouble() * (MaxAcceleration - MinAcceleration) + MinAcceleration;
-                    life[i] = 0;
                 }
                 else
                 {

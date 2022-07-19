@@ -52,10 +52,10 @@ namespace AeroCore.API
         public void RegisterGMCMConfig<T>(IManifest who, IModHelper helper, T config, Action ConfigChanged = null, bool TitleScreenOnly = false) where T : class, new();
 
         /// <summary>Registers a custom behavior type which can be used by particle systems</summary>
-        public void RegisterParticleBehavior(string name, Func<int, IParticleBehavior> factory);
+        public void RegisterParticleBehavior(string name, Func<IParticleBehavior> factory);
 
         /// <summary>Regiosters a custom skin type which can be used by particle systems</summary>
-        public void RegisterParticleSkin(string name, Func<int, IParticleSkin> factory);
+        public void RegisterParticleSkin(string name, Func<IParticleSkin> factory);
 
         /// <summary>Creates a new particle system</summary>
         public IParticleManager CreateParticleSystem(string behavior, object behaviorArgs, string skin, object skinArgs, IParticleEmitter emitter, int count);

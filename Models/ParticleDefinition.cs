@@ -1,5 +1,6 @@
 ﻿using AeroCore.Particles;
 using AeroCore.Utils;
+using Newtonsoft.Json.Linq;
 using StardewModdingAPI;
 using System.Collections.Generic;
 
@@ -23,8 +24,8 @@ namespace AeroCore.Models
             else
                 return new Manager(
                     count,
-                    BehaviorSettings is null ? bgen(count) : Reflection.MapTo(bgen(count), BehaviorSettings),
-                    SkinSettings is null ? sgen(count) : Reflection.MapTo(sgen(count), SkinSettings),
+                    BehaviorSettings is null ? bgen() : Reflection.MapTo(bgen(), BehaviorSettings),
+                    SkinSettings is null ? sgen() : Reflection.MapTo(sgen(), SkinSettings),
                     emitter
                 );
             return null;

@@ -9,7 +9,9 @@ using System;
 
 namespace AeroCore
 {
+#if DEBUG
     [ModInit]
+#endif
     internal class FeatureTest
     {
         private static IParticleManager particles;

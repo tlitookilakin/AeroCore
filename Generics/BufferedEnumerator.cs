@@ -7,7 +7,9 @@ namespace AeroCore.Generics
 {
     public class BufferedEnumerator<T> : IEnumerator<T>
     {
-        private readonly Stack<T> buffer = new();
+        // give it a big initial capacity to improve performance
+        // at the cost of some memory
+        private readonly Stack<T> buffer = new(32);
         private readonly IEnumerator<T> basis;
         private T current = default;
         object IEnumerator.Current => current;

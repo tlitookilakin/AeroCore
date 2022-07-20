@@ -54,7 +54,7 @@ namespace AeroCore.API
         /// <summary>Registers a custom behavior type which can be used by particle systems</summary>
         public void RegisterParticleBehavior(string name, Func<IParticleBehavior> factory);
 
-        /// <summary>Regiosters a custom skin type which can be used by particle systems</summary>
+        /// <summary>Registers a custom skin type which can be used by particle systems</summary>
         public void RegisterParticleSkin(string name, Func<IParticleSkin> factory);
 
         /// <summary>Creates a new particle system</summary>

@@ -1,69 +1,68 @@
-﻿using Microsoft.Xna.Framework.Content;
-using StardewModdingAPI;
+﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AeroCore.Generics
 {
-    public class LazyAsset<T> : IDisposable
+    [ModInit]
+    public abstract class LazyAsset
+    {
+        internal Func<string> getPath;
+        internal bool ignoreLocale;
+
+        internal static readonly ConditionalWeakTable<LazyAsset, IModHelper> Watchers = new();
+        internal static void Init()
+        {
+            ModEntry.helper.Events.Content.AssetsInvalidated += CheckWatchers;
+        }
+        internal static void CheckWatchers(object _, AssetsInvalidatedEventArgs ev)
+        {
+            foreach ((var asset, var helper) in Watchers) 
+            {
+                string path = asset.getPath();
+                foreach (var name in asset.ignoreLocale ? ev.NamesWithoutLocale : ev.Names)
+                {
+                    if (name.IsEquivalentTo(path))
+                    {
+                        asset.Reload(); break;
+                    }
+                }
+            }
+        }
+        internal abstract void Reload();
+    }
+    public class LazyAsset<T> : LazyAsset
     {
         private IModHelper helper;
-        private Func<string> getPath;
         private T cached = default;
         private bool isCached = false;
-        private IMonitor monitor;
-        private bool disposedValue;
 
         public LogLevel errorLevel;
         public T Value => GetAsset();
 
-        public LazyAsset(IModHelper Helper, IMonitor Monitor, Func<string> AssetPath, LogLevel ErrorLevel = LogLevel.Trace)
+        public LazyAsset(IModHelper Helper, Func<string> AssetPath, bool IgnoreLocale = true, LogLevel ErrorLevel = LogLevel.Trace)
         {
             getPath = AssetPath;
             errorLevel = ErrorLevel;
             helper = Helper;
-            monitor = Monitor;
+            ignoreLocale = IgnoreLocale;
 
-            helper.Events.Content.AssetsInvalidated += WatchContent;
-        }
-        private void WatchContent(object sender, AssetsInvalidatedEventArgs ev)
-        {
-            string path = getPath();
-            foreach (var name in ev.Names)
-                if (name.IsEquivalentTo(path))
-                {
-                    Reload(); 
-                    return;
-                }
+            Watchers.Add(this, Helper);
         }
         public T GetAsset()
         {
             if (!isCached)
             {
-                cached = helper.GameContent.Load<T>(getPath());
                 isCached = true;
+                cached = helper.GameContent.Load<T>(getPath());
             }
             return cached;
         }
-        private void Reload()
+        internal override void Reload()
         {
             cached = default;
             isCached = false;
-        }
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                    helper.Events.Content.AssetsInvalidated -= WatchContent;
-                disposedValue = true;
-            }
-        }
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

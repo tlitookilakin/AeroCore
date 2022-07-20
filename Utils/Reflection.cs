@@ -149,6 +149,43 @@ namespace AeroCore.Utils
                 return false;
             }
         }
+        public static T MapTo<T>(this IDictionary<string, object> dict, T obj)
+        {
+            if (dict is IDictionary<string, JToken> jdict)
+                return jdict.MapTo(obj);
+
+            var type = obj.GetType();
+            var allflag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
+            var props = new Dictionary<string, MemberInfo>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var f in type.GetFields(allflag))
+                if (!f.IsInitOnly && !f.IsLiteral) // const and readonly
+                    props[f.Name] = f;
+            foreach (var p in type.GetProperties(allflag))
+                if (p.CanWrite) // writeable
+                    props[p.Name] = p;
+
+            foreach((var name, var prop) in dict)
+            {
+                if(props.TryGetValue(name, out var member))
+                {
+                    object val = (member.MemberType == MemberTypes.Field) ? ((FieldInfo)member).GetValue(obj) : ((PropertyInfo)member).GetValue(obj);
+                    var targetType = (member.MemberType == MemberTypes.Field) ? ((FieldInfo)member).FieldType : ((PropertyInfo)member).PropertyType;
+
+                    if (!prop.GetType().IsAssignableTo(targetType)) // if it can't be directly assigned
+                        if (TryConvertType(val, targetType, out var con)) // implicit conversion
+                            val = con;
+                        else // try map
+                            val = MapTo(prop ?? Activator.CreateInstance(targetType), val);
+                    if (member is FieldInfo field)
+                        field.SetValue(obj, val);
+                    else
+                        ((PropertyInfo)member).SetValue(obj, val);
+                }
+            }
+
+            return obj;
+        }
         public static T MapTo<T>(this IDictionary<string, JToken> dict, T obj)
         {
             Type type = obj.GetType();
@@ -167,6 +204,8 @@ namespace AeroCore.Utils
                 return (T)jo.ToObject(obj.GetType());
             else if(args.GetType() == obj.GetType())
                 return (T)args;
+            else if(args is IDictionary<string, object> dict)
+                return dict.MapTo(obj);
 
             var type = obj.GetType();
             var allflag = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
@@ -178,8 +217,6 @@ namespace AeroCore.Utils
             foreach (var p in type.GetProperties(allflag))
                 if (p.CanWrite) // writeable
                     props[p.Name] = p;
-
-            ModEntry.monitor.Log(args.GetType().ToString());
 
             foreach (var member in args.GetType().GetMembers(allflag))
             {

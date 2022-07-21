@@ -193,18 +193,37 @@ namespace AeroCore
         public ILHelper AddWithLabels(CodeInstruction instruction, IList<string> labels)
             => AddWithLabels(new[] {instruction}, labels);
 
+        /// <summary>Adds an instruction that stores to a named local</summary>
+        /// <param name="Name">The name of the local</param>
+        /// <param name="type">The type of the local</param>
+        public ILHelper StoreLocal(string Name, Type type)
+        {
+            actionQueue.Add((10, (Name, type)));
+            return this;
+        }
+
+        /// <summary>Adds an instruction that loads from a named local</summary>
+        /// <param name="Name">The name of the local</param>
+        /// <param name="type">The type of the local</param>
+        public ILHelper LoadLocal(string Name, Type type)
+        {
+            actionQueue.Add((11, (Name, type)));
+            return this;
+        }
+
         #endregion queue
 
         public class ILEnumerator : IEnumerator<CodeInstruction>
         {
             private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
-            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump, AddWithLabels};
+            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump, AddWithLabels, StoreLocal, LoadLocal};
 
             private bool disposedValue;
             public readonly BufferedEnumerator<CodeInstruction> source;
             private readonly ILHelper owner;
             public readonly ILGenerator gen;
             private readonly Dictionary<string, Label> labels = new();
+            private readonly Dictionary<string, LocalBuilder> locals = new();
 
             private CodeInstruction current = null;
             private bool isSetup = false;
@@ -218,6 +237,7 @@ namespace AeroCore
             private IList<string> labelsToAdd;
             private bool isLastItem = false;
             private OpCode jumpCode;
+            private Type localtype;
 
             public CodeInstruction Current => current;
             object IEnumerator.Current => current;
@@ -289,9 +309,42 @@ namespace AeroCore
                     return CreateLabel(id);
             }
 
+            /// <summary>Get a named <see cref="LocalBuilder"/>, or create it if it does not exist.</summary>
+            /// <param name="id">The name of the <see cref="LocalBuilder"/></param>
+            /// <param name="type">The type of the <see cref="LocalBuilder"/></param>
+            public LocalBuilder GetOrCreateLocal(string id, Type type)
+            {
+                if (locals.TryGetValue(id, out var l))
+                    return l;
+                else
+                    return CreateLocal(type, id);
+            }
+
+            /// <summary>Create a new <see cref="LocalBuilder"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>
+            /// <param name="type">The type of the <see cref="LocalBuilder"/></param>
+            /// <param name="id">If included, the name of the <see cref="LocalBuilder"/></param>
+            public LocalBuilder CreateLocal(Type type, string id = null)
+            {
+                if (gen is null)
+                {
+                    error("ILGenerator is required to create locals, but was not provided");
+                    return default;
+                }
+
+                if (locals.TryGetValue(id, out var l))
+                {
+                    error($"Local with ID '{id}' already exists");
+                    return l;
+                }
+
+                LocalBuilder local = gen.DeclareLocal(type);
+                if (id is not null)
+                    locals.Add(id, local);
+                return local;
+            }
+
             /// <summary>Create a new <see cref="Label"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>
             /// <param name="id">If included, the name of the <see cref="Label"/></param>
-            /// <returns>The created <see cref="Label"/></returns>
             public Label CreateLabel(string id = null)
             {
                 if (gen is null)
@@ -350,6 +403,11 @@ namespace AeroCore
                         var (codes, labels) = ((IList<CodeInstruction>, IList<string>))arg;
                         labelsToAdd = labels;
                         anchors = codes;
+                        break;
+                    case 10 or 11:
+                        var (local, type) = ((string, Type))arg;
+                        labelsToAdd = new[] {local};
+                        localtype = type;
                         break;
                 }
 
@@ -454,23 +512,17 @@ namespace AeroCore
                         return Add(inst, ref result);
                     var what = inst.anchors[inst.marker];
                     foreach (string id in inst.labelsToAdd)
-                        if (inst.labels.TryGetValue(id, out var label))
-                            what.labels.Add(label);
-                        else
-                            inst.error($"Label with id '{id}' has not been created and does not exist");
+                        what.labels.Add(inst.GetOrCreateLabel(id));
                 }
                 return Add(inst, ref result);
             }
             private static bool AddLabels(ILEnumerator inst, ref CodeInstruction result)
             {
-                if(result is null)
+                if (result is null)
                     inst.error("Tried to add labels to null instruction");
                 else
                     foreach (string id in inst.labelsToAdd)
-                        if (inst.labels.TryGetValue(id, out var label))
-                            result.labels.Add(label);
-                        else
-                            inst.error($"Label with id '{id}' has not been created and does not exist");
+                        result.labels.Add(inst.GetOrCreateLabel(id));
                 return true;
 
             }
@@ -481,6 +533,24 @@ namespace AeroCore
 
                 inst.marker++;
                 result = new(inst.jumpCode, inst.GetOrCreateLabel(inst.labelsToAdd[0]));
+                return false;
+            }
+            private static bool StoreLocal(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker > 0)
+                    return true;
+
+                inst.marker++;
+                result = new(OpCodes.Stloc_S, inst.GetOrCreateLocal(inst.labelsToAdd[0], inst.localtype));
+                return false;
+            }
+            private static bool LoadLocal(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (inst.marker > 0)
+                    return true;
+
+                inst.marker++;
+                result = new(OpCodes.Ldloc_S, inst.GetOrCreateLocal(inst.labelsToAdd[0], inst.localtype));
                 return false;
             }
             #endregion Modes

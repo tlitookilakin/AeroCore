@@ -23,6 +23,7 @@ namespace AeroCore.Particles
         public Vector2 Offset { get; set; }
         public Vector2 Scale { get; set; }
         public float Depth { get; set; }
+        public IParticleEmitter Emitter { get; }
 
         public void Draw(SpriteBatch batch);
         public void Tick(int millis);

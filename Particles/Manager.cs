@@ -12,6 +12,7 @@ namespace AeroCore.Particles
         public Vector2 Offset { get; set; } = Vector2.Zero;
         public Vector2 Scale { get; set; } = new(1f, 1f);
         public float Depth { get; set; } = 0f;
+        public IParticleEmitter Emitter => emitter;
 
         private int[] life;
         private Vector2[] positions;

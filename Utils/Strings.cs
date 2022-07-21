@@ -62,9 +62,34 @@ namespace AeroCore.Utils
         }
         public static bool ToRect(string x, string y, string w, string h, out Rectangle rect)
         {
-            if (int.TryParse(x, out int xx) && int.TryParse(y, out int yy) && int.TryParse(w, out int ww) && int.TryParse(h, out int hh))
+            if (int.TryParse(x, out int xx) && 
+                int.TryParse(y, out int yy) && 
+                int.TryParse(w, out int ww) && 
+                int.TryParse(h, out int hh))
             {
                 rect = new(xx, yy, ww, hh);
+                return true;
+            }
+            rect = new();
+            return false;
+        }
+        public static bool FromCorners(this string[] strings, out Rectangle rect, int offset = 0)
+        {
+            if (offset + 3 >= strings.Length)
+            {
+                rect = new();
+                return false;
+            }
+            return FromCorners(strings[offset], strings[offset + 1], strings[offset + 2], strings[offset + 3], out rect);
+        }
+        public static bool FromCorners(string x1, string y1, string x2, string y2, out Rectangle rect)
+        {
+            if (int.TryParse(x1, out int ax) &&
+                int.TryParse(y1, out int ay) &&
+                int.TryParse(x2, out int bx) &&
+                int.TryParse(y2, out int by))
+            {
+                rect = new(Math.Min(ax, bx), Math.Min(ax, bx), Math.Abs(ax - bx), Math.Abs(ay - by));
                 return true;
             }
             rect = new();

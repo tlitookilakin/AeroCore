@@ -61,5 +61,8 @@ namespace AeroCore.Utils
         public static Point ToPoint(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
         public static Vector2 ToVector2(this xTile.Dimensions.Location loc) => new(loc.X,loc.Y);
         public static Vector2 ToVector2(this xTile.Dimensions.Size size) => new(size.Width, size.Height);
+
+        public static int GetSeasonIndexForLocation(this GameLocation loc)
+            => Utility.getSeasonNumber(loc.seasonOverride is null ? loc.GetSeasonForLocation() : loc.seasonOverride);
     }
 }

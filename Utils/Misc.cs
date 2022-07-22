@@ -36,7 +36,7 @@ namespace AeroCore.Utils
         }
         public static bool IsFestivalAtLocation(string Location)
         {
-            return Location is not null && Game1.weatherIcon == 1 && Game1.whereIsTodaysFest.ToLowerInvariant() == Location.ToLowerInvariant();
+            return Location is not null && Game1.weatherIcon == 1 && Game1.whereIsTodaysFest?.ToUpperInvariant() == Location.ToUpperInvariant();
         }
         public static bool IsFestivalReady()
         {

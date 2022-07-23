@@ -23,6 +23,7 @@ namespace AeroCore.API
         public event Action<IUseObjectEventArgs> UseObjectEvent;
         public event Action<IHeldItemEventArgs> ItemHeldEvent;
         public event Action<IHeldItemEventArgs> StopItemHeldEvent;
+        public event Action<GameLocation> LocationCleanup;
 
         public void RegisterAction(string name, IAeroCoreAPI.ActionHandler action, int cursor = 0)
         {
@@ -219,6 +220,7 @@ namespace AeroCore.API
             Patches.UseObject.OnUseObject += (e) => UseObjectEvent?.Invoke(e);
             Patches.UseItem.OnItemHeld += (e) => ItemHeldEvent?.Invoke(e);
             Patches.UseItem.OnStopItemHeld += (e) => StopItemHeldEvent?.Invoke(e);
+            Patches.LocationCleanup.Cleanup += (e) => LocationCleanup?.Invoke(e);
 
             knownPartBehaviors.Add("simple", () => new SimpleBehavior());
             knownPartSkins.Add("simple", () => new SimpleSkin());

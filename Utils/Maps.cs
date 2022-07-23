@@ -28,7 +28,7 @@ namespace AeroCore.Utils
                 }
             }
         }
-        public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(xTile.Map map, string layerName)
+        public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(this xTile.Map map, string layerName)
         {
             foreach (var item in TilesInLayer(map.GetLayer(layerName)))
                 yield return item;

@@ -82,5 +82,7 @@ namespace AeroCore.Utils
             vec.Y = vec.X * MathF.Sin(angle) + vec.Y * MathF.Cos(angle);
             return vec;
         }
+        public static int Distance(this Point from, Point to)
+            => (int)MathF.Sqrt(MathF.Pow(from.X - to.X, 2) + MathF.Pow(from.Y - to.Y, 2));
     }
 }

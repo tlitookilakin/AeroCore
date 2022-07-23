@@ -35,9 +35,7 @@ namespace AeroCore.Utils
             return points;
         }
         public static bool IsFestivalAtLocation(string Location)
-        {
-            return Location is not null && Game1.weatherIcon == 1 && Game1.whereIsTodaysFest?.ToUpperInvariant() == Location.ToUpperInvariant();
-        }
+            => Location is not null && Game1.weatherIcon == 1 && Location.Equals(Game1.whereIsTodaysFest, StringComparison.OrdinalIgnoreCase);
         public static bool IsFestivalReady()
         {
             if (Game1.weatherIcon != 1)

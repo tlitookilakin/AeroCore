@@ -17,6 +17,7 @@ namespace AeroCore.API
         public event Action<IUseObjectEventArgs> UseObjectEvent;
         public event Action<IHeldItemEventArgs> ItemHeldEvent;
         public event Action<IHeldItemEventArgs> StopItemHeldEvent;
+        public event Action<GameLocation> LocationCleanup;
 
         /// <summary>Registers a custom action</summary>
         /// <param name="name">The name of the action</param>

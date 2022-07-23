@@ -38,7 +38,8 @@ namespace AeroCore
 
         /// <summary>Sets up the helper to run the patch</summary>
         /// <param name="instructions">The original instruction set</param>
-        /// <param name="Generator">The associated <see cref="ILGenerator"/>. Required if creating <see cref="Label"/>s, otherwise optional.</param>
+        /// <param name="Generator">The associated <see cref="ILGenerator"/>. 
+        /// Required if creating <see cref="Label"/>s or <see cref="LocalBuilder"/>s, otherwise optional.</param>
         /// <returns>This</returns>
         public ILHelper Run(IEnumerable<CodeInstruction> instructions, ILGenerator Generator = null)
         {

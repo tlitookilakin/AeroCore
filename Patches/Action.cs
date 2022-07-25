@@ -16,8 +16,8 @@ namespace AeroCore.Patches
     [HarmonyPatch]
     internal class Action
     {
-        internal static readonly Dictionary<string, int> ActionCursors = new(StringComparer.InvariantCultureIgnoreCase);
-        internal static readonly Dictionary<string, IAeroCoreAPI.ActionHandler> Actions = new(StringComparer.InvariantCultureIgnoreCase);
+        internal static readonly Dictionary<string, int> ActionCursors = new(StringComparer.OrdinalIgnoreCase);
+        internal static readonly Dictionary<string, IAeroCoreAPI.ActionHandler> Actions = new(StringComparer.OrdinalIgnoreCase);
         private static readonly PerScreen<int> CurrentActionCursor = new();
 
         [HarmonyPatch(typeof(GameLocation),"performAction")]

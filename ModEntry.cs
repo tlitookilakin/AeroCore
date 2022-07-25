@@ -5,6 +5,7 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace AeroCore
 {
@@ -38,13 +39,15 @@ namespace AeroCore
             helper.Events.GameLoop.SaveLoaded += EnteredWorld;
             helper.Events.GameLoop.GameLaunched += Init;
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private void Init(object _, GameLaunchedEventArgs ev)
         {
             if (helper.ModRegistry.IsLoaded("spacechase0.DynamicGameAssets"))
                 DGA = helper.ModRegistry.GetApi<IDGAAPI>("spacechase0.DynamicGameAssets");
             api.RegisterGMCMConfig(ModManifest, Helper, Config, ConfigUpdated);
             api.InitAll();
-            harmony.PatchAll();
+            harmony.PatchAll(typeof(ModEntry).Assembly);
         }
         private void EnteredWorld(object _, SaveLoadedEventArgs ev)
         {

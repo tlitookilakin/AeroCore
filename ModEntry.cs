@@ -18,6 +18,7 @@ namespace AeroCore
         internal static string ModID;
         internal static API.API api;
         internal static IDGAAPI DGA;
+        internal static IJsonAssetsAPI JA;
         internal static Config Config;
 
         private IReflectedField<Multiplayer> mp;
@@ -45,6 +46,8 @@ namespace AeroCore
         {
             if (helper.ModRegistry.IsLoaded("spacechase0.DynamicGameAssets"))
                 DGA = helper.ModRegistry.GetApi<IDGAAPI>("spacechase0.DynamicGameAssets");
+            if (helper.ModRegistry.IsLoaded("spacechase0.JsonAssets"))
+                JA = helper.ModRegistry.GetApi<IJsonAssetsAPI>("spacechase0.JsonAssets");
             api.RegisterGMCMConfig(ModManifest, Helper, Config, ConfigUpdated);
             api.InitAll();
             harmony.PatchAll(typeof(ModEntry).Assembly);

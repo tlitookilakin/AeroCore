@@ -8,11 +8,17 @@ using System.Text;
 using System.Globalization;
 using StardewModdingAPI.Utilities;
 using StardewModdingAPI;
+using SObject = StardewValley.Object;
+using StardewValley.Objects;
+using StardewValley.Tools;
 
 namespace AeroCore.Utils
 {
     public static class Strings
     {
+        internal static string[] ObjectPrefixes = 
+            { "(O)", "(BC)", "(F)", "(B)", "(FL)", "(WP)", "(W)", "(H)", "(S)", "(P)"}; //tool creation not supported
+
         public static bool ToPoint(this string[] strings, out Point point, int offset = 0)
         {
             if (offset + 1 >= strings.Length)
@@ -135,6 +141,54 @@ namespace AeroCore.Utils
 
             int count = PathUtilities.GetSegments(path).Length;
             return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString())[count..]);
+        }
+        public static bool TryGetItem(this string str, out Item item, Color? color = null)
+        {
+            str = str.Trim();
+            item = (Item)ModEntry.DGA?.SpawnDGAItem(str, color);
+            if (item is not null)
+                return true;
+            int id, i;
+            if ((id = ModEntry.JA?.GetObjectId(str) ?? -1) != -1)
+                i = 0;
+            else if ((id = ModEntry.JA?.GetBigCraftableId(str) ?? -1) != -1)
+                i = 1;
+            else if ((id = ModEntry.JA?.GetWeaponId(str) ?? -1) != -1)
+                i = 6;
+            else if ((id = ModEntry.JA?.GetHatId(str) ?? -1) != -1)
+                i = 7;
+            else if ((id = ModEntry.JA?.GetClothingId(str) ?? -1) != -1)
+                i = 8;
+            else
+            {
+                i = 0;
+                while (i < ObjectPrefixes.Length)
+                    if (str.StartsWith(ObjectPrefixes[i]))
+                        break;
+                    else
+                        i++;
+                int clip = 0;
+                if(i >= ObjectPrefixes.Length)
+                    i = 0;
+                else
+                    clip = ObjectPrefixes[i].Length;
+                if (!int.TryParse(str[clip..], out id))
+                    return false;
+            }
+            switch (i)
+            {
+                case 0: item = new SObject(id, 1); return true; 
+                case 1: item = new SObject(Vector2.Zero, id); return true;
+                case 2: item = new Furniture(id, Vector2.Zero); return true;
+                case 3: item = new Boots(id); return true;
+                case 4: item = new Wallpaper(id, true); return true;
+                case 5: item = new Wallpaper(id, false); return true;
+                case 6: item = new MeleeWeapon(id); return true;
+                case 7: item = new Hat(id); return true;
+                case 8 or 9: item = new Clothing(id); return true;
+            }
+            item = null;
+            return false;
         }
         /// <returns>A copy of the string with all whitespace stripped</returns>
         public static string Collapse(this string str)

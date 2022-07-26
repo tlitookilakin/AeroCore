@@ -84,5 +84,19 @@ namespace AeroCore.Utils
         }
         public static int Distance(this Point from, Point to)
             => (int)MathF.Sqrt(MathF.Pow(from.X - to.X, 2) + MathF.Pow(from.Y - to.Y, 2));
+
+        public static bool TryGetKey<K, V>(this IDictionary<K, V> dict, V value, out K key)
+        {
+            foreach((var kk, var vv) in dict)
+            {
+                if (vv.Equals(value))
+                {
+                    key = kk;
+                    return true;
+                }
+            }
+            key = default;
+            return false;
+        }
     }
 }

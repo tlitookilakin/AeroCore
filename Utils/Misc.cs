@@ -106,7 +106,8 @@ namespace AeroCore.Utils
                 PagedResponseConfirmed.Value = null;
             }
         }
-        public static string GetStringID(this Item item) => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
+        public static string GetStringID(this Item item) 
+            => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
         public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
         {
             try
@@ -126,6 +127,85 @@ namespace AeroCore.Utils
                 return Array.Empty<Building>();
 
             return Game1.getFarm().buildings;
+        }
+        public static bool RemoveNamedItemsFromInventory(this Farmer who, string what, int count)
+        {
+            List<Item> matched = new();
+            int has = 0;
+            foreach (var item in who.Items)
+            {
+                if (item.Name == what)
+                {
+                    matched.Add(item);
+                    has += item.Stack;
+                }
+            }
+            if (has < count)
+                return false;
+            for (int i = 0; i < matched.Count && count > 0; i++)
+            {
+                var item = matched[i];
+                var s = item.Stack;
+                if (count >= item.Stack)
+                    who.removeItemFromInventory(item);
+                else
+                    item.Stack -= count;
+                count -= s;
+            }
+            return true;
+        }
+        public static bool RemoveItemsFromInventory(this Farmer who, Item what, int count = -1)
+        {
+            if (count == -1)
+                count = what.Stack;
+            List<Item> matched = new();
+            int has = 0;
+            foreach (var item in who.Items) 
+            {
+                if (what.canStackWith(item) && item.canStackWith(what)) 
+                {
+                    matched.Add(item); 
+                    has += item.Stack;
+                }
+            }
+            if (has < count)
+                return false;
+            for(int i = 0; i < matched.Count && count > 0; i++)
+            {
+                var item = matched[i];
+                var s = item.Stack;
+                if (count >= item.Stack)
+                    who.removeItemFromInventory(item);
+                else
+                    item.Stack -= count;
+                count -= s;
+            }
+            return true;
+        }
+        public static bool HasItemNamed(this Farmer who, string what, int count)
+        {
+            what = what.Trim();
+            int has = 0;
+            foreach (var item in who.Items)
+            {
+                if (item.Name == what)
+                    has += item.Stack;
+                if (has >= count)
+                    return true;
+            }
+            return false;
+        }
+        public static bool HasItem(this Farmer who, Item what, int count)
+        {
+            int has = 0;
+            foreach (var item in who.Items)
+            {
+                if (what.canStackWith(item) && item.canStackWith(what))
+                    has += item.Stack;
+                if (has >= count)
+                    return true;
+            }
+            return false;
         }
     }
 }

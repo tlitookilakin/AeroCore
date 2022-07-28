@@ -16,6 +16,7 @@ namespace AeroCore
     {
         #region head
         public delegate IList<CodeInstruction> Transformer(ILEnumerator enumer);
+        public delegate IEnumerable<CodeInstruction> ComplexTransformer(ILEnumerator enumer);
         private readonly List<(int action, object arg)> actionQueue = new();
         public bool Debug = false;
         private readonly string name;
@@ -205,10 +206,20 @@ namespace AeroCore
 
         /// <summary>Adds an instruction that loads from a named local</summary>
         /// <param name="Name">The name of the local</param>
-        /// <param name="type">The type of the local</param>
-        public ILHelper LoadLocal(string Name, Type type)
+        public ILHelper LoadLocal(string Name)
         {
-            actionQueue.Add((11, (Name, type)));
+            actionQueue.Add((11, Name));
+            return this;
+        }
+
+        /// <summary>
+        /// Directly manipulate the instructions at the current point.
+        /// The delegate accepts the cursor in its current state, and outputs a list of instructions to add.
+        /// </summary>
+        /// <param name="transformer">Transformation delegate</param>
+        public ILHelper Transform(ComplexTransformer transformer)
+        {
+            actionQueue.Add((12, transformer));
             return this;
         }
 
@@ -217,7 +228,8 @@ namespace AeroCore
         public class ILEnumerator : IEnumerator<CodeInstruction>
         {
             private delegate bool Mode(ILEnumerator e, ref CodeInstruction result);
-            private static readonly Mode[] modes = {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump, AddWithLabels, StoreLocal, LoadLocal};
+            private static readonly Mode[] modes = 
+                {Finish, Skip, SkipTo, Remove, RemoveTo, Add, Add, AddLabels, AddJump, AddWithLabels, StoreLocal, LoadLocal, TransformEnum};
 
             private bool disposedValue;
             public readonly BufferedEnumerator<CodeInstruction> source;
@@ -239,6 +251,7 @@ namespace AeroCore
             private bool isLastItem = false;
             private OpCode jumpCode;
             private Type localtype;
+            private IEnumerator<CodeInstruction> tenum;
 
             public CodeInstruction Current => current;
             object IEnumerator.Current => current;
@@ -254,7 +267,7 @@ namespace AeroCore
             {
                 if (isLastItem)
                 {
-                    owner.monitor.Log($"Patch '{owner.name}' was successfully aplied.", LogLevel.Debug);
+                    owner.monitor.Log($"Patch '{owner.name}' was successfully applied.", LogLevel.Debug);
                     return false;
                 }
 
@@ -321,6 +334,18 @@ namespace AeroCore
                     return CreateLocal(type, id);
             }
 
+            /// <summary>Get a named <see cref="LocalBuilder"/></summary>
+            /// <param name="id">The name of the <see cref="LocalBuilder"/> to get</param>
+            /// <returns>The <see cref="LocalBuilder"/></returns>
+            public LocalBuilder GetLocal(string id)
+            {
+                if (locals.TryGetValue(id, out var l))
+                    return l;
+
+                error($"Local with id '{id}' has not been created and does not exist");
+                return default;
+            }
+
             /// <summary>Create a new <see cref="LocalBuilder"/>. Can be named. Requires an <see cref="ILGenerator"/> to be provided in <see cref="Run"/></summary>
             /// <param name="type">The type of the <see cref="LocalBuilder"/></param>
             /// <param name="id">If included, the name of the <see cref="LocalBuilder"/></param>
@@ -374,7 +399,7 @@ namespace AeroCore
                 if (labels.TryGetValue(id, out var l))
                     return l;
                 else
-                    error($"Label with id '{id}' has not been created and does not exit");
+                    error($"Label with id '{id}' has not been created and does not exist");
                 return default;
             }
             private bool gotoNextMode()
@@ -405,11 +430,13 @@ namespace AeroCore
                         labelsToAdd = labels;
                         anchors = codes;
                         break;
-                    case 10 or 11:
+                    case 10:
                         var (local, type) = ((string, Type))arg;
                         labelsToAdd = new[] {local};
                         localtype = type;
                         break;
+                    case 11: labelsToAdd = new[] {(string)arg}; break;
+                    case 12: tenum = ((ComplexTransformer)arg)(this).GetEnumerator(); break;
                 }
 
                 modeIndex++;
@@ -551,7 +578,18 @@ namespace AeroCore
                     return true;
 
                 inst.marker++;
-                result = new(OpCodes.Ldloc_S, inst.GetOrCreateLocal(inst.labelsToAdd[0], inst.localtype));
+                result = new(OpCodes.Ldloc_S, inst.GetLocal(inst.labelsToAdd[0]));
+                return false;
+            }
+            private static bool TransformEnum(ILEnumerator inst, ref CodeInstruction result)
+            {
+                if (!inst.tenum.MoveNext())
+                {
+                    inst.tenum.Dispose();
+                    inst.tenum = null;
+                    return true;
+                }
+                result = inst.tenum.Current;
                 return false;
             }
             #endregion Modes

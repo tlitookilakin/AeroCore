@@ -145,7 +145,7 @@ namespace AeroCore.Utils
         public static bool TryGetItem(this string str, out Item item, Color? color = null)
         {
             str = str.Trim();
-            item = (Item)ModEntry.DGA?.SpawnDGAItem(str, color);
+            item = ModEntry.DGA?.SpawnDGAItem(str, color) as Item;
             if (item is not null)
                 return true;
             int id, i;

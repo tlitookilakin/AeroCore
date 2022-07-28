@@ -31,25 +31,6 @@ namespace AeroCore.Integration
         object SpawnDGAItem(string fullId);
 
         /// <summary>
-        /// Gets the names of all installed packs.
-        /// </summary>
-        /// <returns>Array of all pack names.</returns>
-        string[] ListContentPacks();
-
-        /// <summary>
-        /// Gets all items provided by a pack.
-        /// </summary>
-        /// <param name="packname">The name of the pack.</param>
-        /// <returns>Namespaced item names.</returns>
-        string[]? GetItemsByPack(string packname);
-
-        /// <summary>
-        /// Gets all the items (namespaced names)
-        /// </summary>
-        /// <returns>A list of all items.</returns>
-        string[] GetAllItems();
-
-        /// <summary>
         /// Register a DGA pack embedded in another mod.
         /// Needs the standard DGA fields in the manifest. (See documentation.)
         /// Probably shouldn't use config-schema.json for these, because if you do it will overwrite your mod's config.json.

@@ -130,11 +130,13 @@ namespace AeroCore.Utils
         }
         public static bool RemoveNamedItemsFromInventory(this Farmer who, string what, int count)
         {
+            if (what is null)
+                return false;
             List<Item> matched = new();
             int has = 0;
             foreach (var item in who.Items)
             {
-                if (item.Name == what)
+                if (item is not null && item.Name == what)
                 {
                     matched.Add(item);
                     has += item.Stack;
@@ -156,13 +158,15 @@ namespace AeroCore.Utils
         }
         public static bool RemoveItemsFromInventory(this Farmer who, Item what, int count = -1)
         {
+            if (what is null)
+                return false;
             if (count == -1)
                 count = what.Stack;
             List<Item> matched = new();
             int has = 0;
             foreach (var item in who.Items) 
             {
-                if (what.canStackWith(item) && item.canStackWith(what)) 
+                if (item is not null && what.canStackWith(item) && item.canStackWith(what)) 
                 {
                     matched.Add(item); 
                     has += item.Stack;
@@ -184,10 +188,14 @@ namespace AeroCore.Utils
         }
         public static bool HasItemNamed(this Farmer who, string what, int count)
         {
+            if (what is null)
+                return false;
             what = what.Trim();
             int has = 0;
             foreach (var item in who.Items)
             {
+                if (item is null)
+                    continue;
                 if (item.Name == what)
                     has += item.Stack;
                 if (has >= count)
@@ -197,9 +205,13 @@ namespace AeroCore.Utils
         }
         public static bool HasItem(this Farmer who, Item what, int count)
         {
+            if (what is null)
+                return false;
             int has = 0;
             foreach (var item in who.Items)
             {
+                if (item is null)
+                    continue;
                 if (what.canStackWith(item) && item.canStackWith(what))
                     has += item.Stack;
                 if (has >= count)

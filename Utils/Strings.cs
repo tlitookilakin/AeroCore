@@ -11,6 +11,7 @@ using StardewModdingAPI;
 using SObject = StardewValley.Object;
 using StardewValley.Objects;
 using StardewValley.Tools;
+using StardewValley.TerrainFeatures;
 
 namespace AeroCore.Utils
 {
@@ -189,6 +190,24 @@ namespace AeroCore.Utils
             }
             item = null;
             return false;
+        }
+        public static bool TryGetFruitTree(this string id, out FruitTree tree, int stage = -1)
+        {
+            tree = null;
+            int ind;
+            if ((ind = ModEntry.JA?.GetFruitTreeId(id) ?? -1) == -1 && !int.TryParse(id, out ind))
+                return false;
+            tree = stage >= 0 ? new(ind, stage) : new(ind);
+            return true;
+        }
+        public static bool TryGetCrop(this string id, int x, int y, out Crop crop)
+        {
+            crop = null;
+            int ind;
+            if ((ind = ModEntry.JA?.GetCropId(id) ?? -1) == -1 && !int.TryParse(id, out ind))
+                return false;
+            crop = new(ind, x, y);
+            return true;
         }
         /// <returns>A copy of the string with all whitespace stripped</returns>
         public static string Collapse(this string str)

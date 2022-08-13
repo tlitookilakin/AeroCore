@@ -19,14 +19,12 @@ namespace AeroCore.Particles
         public float MaxAcceleration { get; set; } = 0f;
 
         private Vector2[] speed;
-        private int[] lifetime;
         private double[] curve;
         private float[] acceleration;
 
         public void Init(int count)
         {
             speed = new Vector2[count];
-            lifetime = new int[count];
             curve = new double[count];
             acceleration = new float[count];
         }
@@ -34,7 +32,6 @@ namespace AeroCore.Particles
         public void Cleanup()
         {
             speed.Clear();
-            lifetime.Clear();
             curve.Clear();
             acceleration.Clear();
         }
@@ -43,33 +40,44 @@ namespace AeroCore.Particles
             //noop
         }
 
-        public void Tick(ref Vector2[] positions, ref int[] life, int millis)
+        public void Tick(ref Vector2[] positions, ref int[] life, ref int[] maxLife, int millis)
         {
             for(int i = 0; i < life.Length; i++)
             {
-                if (life[i] <= 0)
+                if (life[i] == 0)
                     continue;
-                if (life[i] == 1) //just spawned
+                int clife = life[i];
+                if (clife < 0) //just spawned
                 {
-                    float spd = Game1.random.Next(MinSpeed, MaxSpeed) / 1000f;
-                    float dir = (float)Game1.random.NextDouble() * DirectionVariance * 2f - DirectionVariance + Direction;
-                    speed[i] = Data.DirLength(Data.DegToRad(dir), spd);
-                    lifetime[i] = Game1.random.Next(MinLife, MaxLife) * 1000;
-                    curve[i] = Data.DegToRad(Game1.random.NextDouble() * (MaxCurve - MinCurve) + MinCurve) / 1000f;
-                    acceleration[i] = (float)Game1.random.NextDouble() * (MaxAcceleration - MinAcceleration) + MinAcceleration;
+                    if (maxLife[i] == 0)
+                    {
+                        float spd = Game1.random.Next(MinSpeed, MaxSpeed) / 1000f;
+                        float dir = (float)Game1.random.NextDouble() * DirectionVariance * 2f - DirectionVariance + Direction;
+                        speed[i] = Data.DirLength(Data.DegToRad(dir), spd);
+                        maxLife[i] = Game1.random.Next(MinLife, MaxLife) * 1000;
+                        curve[i] = Data.DegToRad(Game1.random.NextDouble() * (MaxCurve - MinCurve) + MinCurve) / 1000f;
+                        acceleration[i] = (float)Game1.random.NextDouble() * (MaxAcceleration - MinAcceleration) + MinAcceleration;
+                        clife = -clife;
+                    } else
+                    {
+                        clife = millis - clife;
+                        life[i] = clife;
+                    }
                 }
                 else
                 {
                     life[i] += millis;
-                    if (life[i] >= lifetime[i]) //dying
-                    {
-                        life[i] = 0;
-                    }
-                    else //moving
-                    {
-                        positions[i] = positions[i] + (speed[i] * millis);
-                        speed[i] = speed[i].Rotate((float)(curve[i] * millis)) * (1f + acceleration[i]);
-                    }
+                    clife += millis;
+                }
+                if (clife >= maxLife[i]) //dying
+                {
+                    life[i] = 0;
+                    maxLife[i] = 0;
+                }
+                else //moving
+                {
+                    positions[i] = positions[i] + (speed[i] * clife);
+                    speed[i] = speed[i].Rotate((float)(curve[i] * clife)) * (1f + acceleration[i]);
                 }
             }
         }

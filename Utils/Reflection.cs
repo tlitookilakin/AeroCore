@@ -251,5 +251,20 @@ namespace AeroCore.Utils
                 ? token.Value<T>()
                 : default;
         }
+
+        public static IEnumerable<Type> GetAllKnownTypes()
+            => AppDomain.CurrentDomain.GetAssemblies().SelectMany((ass) => {
+                    try{return ass.GetTypes();}
+                    catch{return Array.Empty<Type>();}
+                });
+
+        public static bool TryPatch(this Harmony harmony, MethodBase original, HarmonyMethod prefix = null, 
+            HarmonyMethod postfix = null, HarmonyMethod transpiler = null, HarmonyMethod finalizer = null)
+        {
+            if (original is null)
+                return false;
+            harmony.Patch(original, prefix, postfix, transpiler, finalizer);
+            return true;
+        }
     }
 }

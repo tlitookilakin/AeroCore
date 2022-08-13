@@ -36,6 +36,8 @@ namespace AeroCore.Particles
         private int timeSinceLast;
         private int variance;
 
+        private int lastIndex = 0;
+
         public Emitter()
         {
             Reset();
@@ -59,23 +61,27 @@ namespace AeroCore.Particles
         public void Tick(ref Vector2[] position, ref int[] life, int millis)
         {
             timeSinceLast += millis;
-            int pindex = 0;
             while (timeSinceLast >= rate + variance)
             {
+                int pindex = lastIndex;
+                int start = lastIndex;
                 timeSinceLast -= rate + variance;
-                variance = Game1.random.Next(rateVariance * 2) - rateVariance;
                 int count = Game1.random.Next(burstMax - burstMin) + burstMin;
-                while (count > 0 && pindex < life.Length)
+                while (count > 0 && pindex - start < life.Length)
                 {
                     count--;
-                    while (pindex < life.Length && life[pindex] > 0)
+                    while (pindex - start < life.Length && life[pindex % life.Length] != 0)
                         pindex++;
-                    if (pindex < life.Length)
-                        Emit(ref position, ref life, pindex);
+                    if (pindex - start < life.Length)
+                    {
+                        Emit(ref position, ref life, pindex, timeSinceLast + 1);
+                        lastIndex = pindex;
+                    }
                 }
+                variance = Game1.random.Next(rateVariance * 2) - rateVariance;
             }
         }
-        private void Emit(ref Vector2[] pos, ref int[] life, int index)
+        private void Emit(ref Vector2[] pos, ref int[] life, int index, int millis)
         {
             if (Radial)
             {
@@ -86,7 +92,7 @@ namespace AeroCore.Particles
             {
                 pos[index] = new(Game1.random.Next(Region.Width) + Region.X, Game1.random.Next(Region.Height) + Region.Y);
             }
-            life[index] = 1;
+            life[index] = -millis;
         }
     }
 }

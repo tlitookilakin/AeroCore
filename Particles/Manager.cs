@@ -15,6 +15,7 @@ namespace AeroCore.Particles
         public IParticleEmitter Emitter => emitter;
 
         private int[] life;
+        private int[] maxLife;
         private Vector2[] positions;
         private readonly IParticleBehavior behavior;
         private readonly IParticleSkin skin;
@@ -26,6 +27,7 @@ namespace AeroCore.Particles
             this.behavior = behavior;
             life = new int[count];
             positions = new Vector2[count];
+            maxLife = new int[count];
             this.skin = skin;
             this.emitter = emitter is Emitter e ? e : new(emitter);
             this.behavior.Init(count);
@@ -39,13 +41,14 @@ namespace AeroCore.Particles
             isSetup = false;
             life.Clear();
             positions.Clear();
+            maxLife.Clear();
         }
 
         public void Draw(SpriteBatch batch)
         {
             if(isSetup)
                 if(ClipRegion is null || Game1.viewport.ToRect().Intersects((Rectangle)ClipRegion))
-                    skin.Draw(batch, positions, life, Scale, Offset, Depth);
+                    skin.Draw(batch, positions, life, maxLife, Scale, Offset, Depth);
             else
                 ModEntry.monitor.LogOnce($"Particle Emitter was not ticked before attempting to draw!", LogLevel.Warn);
         }
@@ -58,7 +61,7 @@ namespace AeroCore.Particles
                 if (life[i] == 1)
                     life[i] = millis;
             emitter.Tick(ref positions, ref life, millis);
-            behavior.Tick(ref positions, ref life, millis);
+            behavior.Tick(ref positions, ref life, ref maxLife, millis);
         }
         private void Setup()
         {

@@ -206,9 +206,9 @@ namespace AeroCore
 
         /// <summary>Adds an instruction that loads from a named local</summary>
         /// <param name="Name">The name of the local</param>
-        public ILHelper LoadLocal(string Name)
+        public ILHelper LoadLocal(string Name, bool reference = false)
         {
-            actionQueue.Add((11, Name));
+            actionQueue.Add((11, (Name, reference)));
             return this;
         }
 
@@ -435,7 +435,11 @@ namespace AeroCore
                         labelsToAdd = new[] {local};
                         localtype = type;
                         break;
-                    case 11: labelsToAdd = new[] {(string)arg}; break;
+                    case 11: 
+                        var (name, isRef) = ((string, bool))arg;
+                        labelsToAdd = new[] {name};
+                        jumpCode = isRef ? OpCodes.Ldarga_S : OpCodes.Ldarg_S;
+                        break;
                     case 12: tenum = ((ComplexTransformer)arg)(this).GetEnumerator(); break;
                 }
 

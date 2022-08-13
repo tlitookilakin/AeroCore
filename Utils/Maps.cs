@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,5 +65,24 @@ namespace AeroCore.Utils
 
         public static int GetSeasonIndexForLocation(this GameLocation loc)
             => Utility.getSeasonNumber(loc.seasonOverride is null ? loc.GetSeasonForLocation() : loc.seasonOverride);
+
+        public static ResourceClump ResourceClumpAt(this GameLocation loc, Vector2 position)
+        {
+            if (loc is null)
+                return null;
+            foreach(var clump in loc.resourceClumps)
+                if (clump.currentTileLocation == position)
+                    return clump;
+            return null;
+        }
+        public static ResourceClump ResourceClumpIntersecting(this GameLocation loc, int x, int y)
+        {
+            if (loc is null)
+                return null;
+            foreach (var clump in loc.resourceClumps)
+                if (clump.occupiesTile(x, y))
+                    return clump;
+            return null;
+        }
     }
 }

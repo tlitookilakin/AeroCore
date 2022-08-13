@@ -10,6 +10,6 @@
 		"Region": {"X": 0, "Y": 0, "Width": 16, "Height": 16},
 		"MinScale": 4,
 		"Colors": ["white", "transparent"],
-		"LoopColor": true
+		"ColorLoops": 10
 	}
 }

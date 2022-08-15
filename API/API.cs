@@ -207,6 +207,17 @@ namespace AeroCore.API
         public IParticleManager CreateParticleSystem(JObject json, IParticleEmitter emitter, int count)
             => json.ToObject<ParticleDefinition>().Create(emitter, count);
 
+        public bool CheckConditions(string condition_query, Random seeded_random = null, Farmer target_farmer = null,
+            Item target_item = null, GameLocation target_location = null)
+            => Backport.GameStateQuery.CheckConditions(condition_query, seeded_random, target_farmer, target_item, target_location);
+
+        public void RegisterQueryType(string query_name, Func<string[], bool> query_delegate)
+            => Backport.GameStateQuery.RegisterQueryType(query_name, new(query_delegate));
+
+        public string ParseTokenText(string format, Random r = null,
+            IAeroCoreAPI.ParseDialogueDelegate handle_additional_tags = null, Farmer target_farmer = null)
+            => Backport.TextParser.ParseText(format, r, new(handle_additional_tags), target_farmer);
+
         #endregion interface_accessible
         #region internals
 

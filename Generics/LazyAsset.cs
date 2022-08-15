@@ -34,17 +34,14 @@ namespace AeroCore.Generics
     }
     public class LazyAsset<T> : LazyAsset
     {
-        private IModHelper helper;
+        private readonly IModHelper helper;
         private T cached = default;
         private bool isCached = false;
-
-        public LogLevel errorLevel;
         public T Value => GetAsset();
 
-        public LazyAsset(IModHelper Helper, Func<string> AssetPath, bool IgnoreLocale = true, LogLevel ErrorLevel = LogLevel.Trace)
+        public LazyAsset(IModHelper Helper, Func<string> AssetPath, bool IgnoreLocale = true)
         {
             getPath = AssetPath;
-            errorLevel = ErrorLevel;
             helper = Helper;
             ignoreLocale = IgnoreLocale;
 

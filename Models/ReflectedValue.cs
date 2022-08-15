@@ -66,7 +66,6 @@ namespace AeroCore.ReflectedValue
     }
     public class ValueChain : IValue
     {
-        private readonly Type Owner;
         private readonly MethodInfo GetValue;
         private readonly MethodInfo SetValue;
         private readonly FieldInfo Field;
@@ -76,7 +75,6 @@ namespace AeroCore.ReflectedValue
         private readonly bool IsField = false;
         internal ValueChain(Type owner, MethodInfo getter, object[] args = null, IValue<object> parent = null)
         {
-            Owner = owner;
             Parent = parent;
             GetValue = getter;
             Output = getter?.ReturnType;
@@ -86,7 +84,6 @@ namespace AeroCore.ReflectedValue
         }
         internal ValueChain(Type owner, FieldInfo field, IValue<object> parent = null)
         {
-            Owner = owner;
             Parent = parent;
             Field = field;
             Output = field?.FieldType;
@@ -94,7 +91,6 @@ namespace AeroCore.ReflectedValue
         }
         internal ValueChain(Type owner, string name, IValue<object> parent = null)
         {
-            Owner = owner;
             Parent = parent;
             Field = owner.FieldNamed(name);
             GetValue = owner.PropertyGetter(name);
@@ -118,9 +114,16 @@ namespace AeroCore.ReflectedValue
         public object Get(object owner) => Get<object>(owner);
         public void Set(object owner, object value) => Set<object>(owner, value);
         public T Call<T>(object owner, string method, params object[] args)
-            => (T)Output.MethodNamed(method)?.Invoke(Get(owner), args);
+            => method is null && !IsField ?
+            (T)GetValue.Invoke(owner, args) :
+            (T)Output.MethodNamed(method)?.Invoke(Get(owner), args);
         public void Call(object owner, string method, params object[] args)
-            => Output.MethodNamed(method)?.Invoke(Get(owner), args);
+        {
+            if (method is null && !IsField)
+                GetValue.Invoke(owner, args);
+            else
+                Output.MethodNamed(method)?.Invoke(Get(owner), args);
+        }
         public ValueChain ValueRef<V>(string name)
             => new(Output, name, this);
         public ValueChain MethodRef<V>(string name, params object[] args)

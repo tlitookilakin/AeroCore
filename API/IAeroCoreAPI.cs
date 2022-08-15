@@ -11,6 +11,7 @@ namespace AeroCore.API
     public interface IAeroCoreAPI
     {
         public delegate void ActionHandler(Farmer who, string what, Point tile, GameLocation where);
+        public delegate bool ParseDialogueDelegate(string[] tag_split, ref string substitution, Random r);
 
         public event Action<ILightingEventArgs> LightingEvent;
         public event Action<IUseItemEventArgs> UseItemEvent;
@@ -69,5 +70,15 @@ namespace AeroCore.API
 
         /// <summary>Creates a new particle system from a json object</summary>
         public IParticleManager CreateParticleSystem(JObject json, IParticleEmitter emitter, int count);
+
+        /// <summary>Checks a game query string.</summary>
+        public bool CheckConditions(string condition_query, Random seeded_random = null, Farmer target_farmer = null, 
+            Item target_item = null, GameLocation target_location = null);
+
+        /// <summary>Registers a custom query type.</summary>
+        public void RegisterQueryType(string query_name, Func<string[], bool> query_delegate);
+
+        /// <summary>Parses tokenized text.</summary>
+        public string ParseTokenText(string format, Random r = null, ParseDialogueDelegate handle_additional_tags = null, Farmer target_farmer = null);
     }
 }

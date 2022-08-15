@@ -219,5 +219,19 @@ namespace AeroCore.Utils
             }
             return false;
         }
+        public static int Lerp(int from, int to, float amount)
+            => from + (int)(amount * (to - from) + .5f);
+        public static byte Lerp(byte from, byte to, float amount)
+            => (byte)(from + (int)(amount * (to - from) + .5f));
+        public static Color Interpolate(this Color from, Color to, float amount)
+        {
+            amount = Math.Clamp(amount, 0f, 1f);
+            return new(
+                Lerp(from.R, to.R, amount),
+                Lerp(from.G, to.G, amount),
+                Lerp(from.B, to.B, amount),
+                Lerp(from.A, to.A, amount)
+            );
+        }
     }
 }

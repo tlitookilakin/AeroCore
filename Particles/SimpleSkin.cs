@@ -105,7 +105,7 @@ namespace AeroCore.Particles
                     texture,
                     positions[i] + offset,
                     regions[i],
-                    Color.Lerp(colors[whichc], colors[(whichc + 1) % colors.Length], clife % ctime / (float)ctime),
+                    colors[whichc].Interpolate(colors[(whichc + 1) % colors.Length], clife % ctime / (float)ctime),
                     spin[i] * clife,
                     origin,
                     scales[i] * scale,

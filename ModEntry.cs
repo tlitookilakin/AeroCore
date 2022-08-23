@@ -61,7 +61,7 @@ namespace AeroCore
         private static void ConfigUpdated()
         {
             if (Config.CursorLightHold)
-                User.CursorLight.isLightActive = false;
+                User.isLightActive = false;
         }
     }
 }

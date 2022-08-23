@@ -10,5 +10,7 @@
 	"config.CursorLightBind.desc": "What key turns the cursor light on / off",
 	"config.CursorLightHold.label": "Hold to show",
 	"config.CursorLightHold.desc": "Whether the key must be held to show the light, or is toggled when pressed",
-	"config.CursorLight.header": "Cursor Light"
+	"config.CursorLight.header": "Cursor Light",
+	"config.PlaceBind.label": "Place item in world",
+	"config.PlaceBind.desc": "Press this key while holding an item to place it in the world"
 }

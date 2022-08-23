@@ -1,21 +1,25 @@
 ﻿using AeroCore.Models;
+using AeroCore.Patches;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI.Events;
 using StardewValley;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace AeroCore.User
+namespace AeroCore
 {
     [ModInit]
-    internal class CursorLight
+    internal class User
     {
         private static readonly Vector2 tileSize = new(64, 64);
         private static readonly Vector2 offset = new(-32, -32);
         private static Vector2 tile = new();
         internal static bool isLightActive = false;
-        private static Texture2D tex; 
+        private static Texture2D tex;
         internal static void Init()
         {
             tex = ModEntry.helper.ModContent.Load<Texture2D>("assets/cursorlight.png");
@@ -30,6 +34,8 @@ namespace AeroCore.User
         {
             if (ModEntry.Config.CursorLightBind.JustPressed())
                 isLightActive = ModEntry.Config.CursorLightHold || !isLightActive;
+            if (ModEntry.Config.PlaceBind.JustPressed())
+                TryPlaceItem(ev.Cursor.GrabTile);
         }
         private static void ButtonReleased(object _, ButtonReleasedEventArgs ev)
         {
@@ -44,6 +50,23 @@ namespace AeroCore.User
                     Color.Black * ModEntry.Config.CursorLightIntensity,
                     0f, Vector2.Zero, ev.scale * 4f, SpriteEffects.None, 0f
                 );
+        }
+        private static void TryPlaceItem(Vector2 tile)
+        {
+            var where = Game1.player.currentLocation;
+            var held = Game1.player.CurrentItem;
+            if (held is null)
+                return;
+            var place = ItemWrapper.WrapItem(held.getOne(), true);
+            if (tile != Game1.player.getTileLocation() && where.isTileLocationTotallyClearAndPlaceableIgnoreFloors(tile))
+            {
+                place.placementAction(where, (int)tile.X * 64, (int)tile.Y * 64, Game1.player);
+                Game1.player.reduceActiveItemByOne();
+                where.playSoundAt("axchop", tile);
+            } else
+            {
+                Game1.playSound("cancel");
+            }
         }
     }
 }

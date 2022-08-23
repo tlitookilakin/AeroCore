@@ -17,5 +17,6 @@ namespace AeroCore
 
         [GMCMSection("CursorLight")]
         public bool CursorLightHold { get; set; } = false;
+        public KeybindList PlaceBind { get; set; } = new(SButton.O);
     }
 }

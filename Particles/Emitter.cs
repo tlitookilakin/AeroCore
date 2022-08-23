@@ -74,7 +74,7 @@ namespace AeroCore.Particles
                         pindex++;
                     if (pindex - start < life.Length)
                     {
-                        Emit(ref position, ref life, pindex, timeSinceLast + 1);
+                        Emit(ref position, ref life, pindex % life.Length, timeSinceLast + 1);
                         lastIndex = pindex;
                     }
                 }

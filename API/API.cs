@@ -185,7 +185,12 @@ namespace AeroCore.API
                         continue;
                     var m = AccessTools.DeclaredMethod(type, method);
                     if (m is not null && m.IsStatic)
-                        m.Invoke(null, args);
+                    {
+                        try { m.Invoke(null, args); }
+                        catch(Exception e) {
+                            ModEntry.monitor.Log($"Exception initing class {type.AssemblyQualifiedName}:\n{e}", LogLevel.Error); 
+                        }
+                    }
                 }
             }
         }
@@ -217,6 +222,15 @@ namespace AeroCore.API
         public string ParseTokenText(string format, Random r = null,
             IAeroCoreAPI.ParseDialogueDelegate handle_additional_tags = null, Farmer target_farmer = null)
             => Backport.TextParser.ParseText(format, r, new(handle_additional_tags), target_farmer);
+
+        public StardewValley.Object WrapItem(Item what, bool forceSubtype = false)
+            => Patches.ItemWrapper.WrapItem(what, forceSubtype);
+
+        public Item UnwrapItem(StardewValley.Object what)
+            => Patches.ItemWrapper.UnwrapItem(what);
+
+        public int UnwrapItems(List<Item> items)
+            => Patches.ItemWrapper.UnwrapItemsInList(items);
 
         #endregion interface_accessible
         #region internals

@@ -44,6 +44,7 @@ namespace AeroCore.Particles
         {
             for(int i = 0; i < life.Length; i++)
             {
+                int vtime = millis;
                 if (life[i] == 0)
                     continue;
                 int clife = life[i];
@@ -54,13 +55,14 @@ namespace AeroCore.Particles
                         float spd = Game1.random.Next(MinSpeed, MaxSpeed) / 1000f;
                         float dir = (float)Game1.random.NextDouble() * DirectionVariance * 2f - DirectionVariance + Direction;
                         speed[i] = Data.DirLength(Data.DegToRad(dir), spd);
-                        maxLife[i] = Game1.random.Next(MinLife, MaxLife) * 1000;
+                        maxLife[i] = Math.Max(1, Game1.random.Next(MinLife, MaxLife) * 1000);
                         curve[i] = Data.DegToRad(Game1.random.NextDouble() * (MaxCurve - MinCurve) + MinCurve) / 1000f;
                         acceleration[i] = (float)Game1.random.NextDouble() * (MaxAcceleration - MinAcceleration) + MinAcceleration;
                         clife = -clife;
                     } else
                     {
                         clife = millis - clife;
+                        vtime = clife;
                         life[i] = clife;
                     }
                 }
@@ -76,8 +78,8 @@ namespace AeroCore.Particles
                 }
                 else //moving
                 {
-                    positions[i] = positions[i] + (speed[i] * clife);
-                    speed[i] = speed[i].Rotate((float)(curve[i] * clife)) * (1f + acceleration[i]);
+                    positions[i] = positions[i] + (speed[i] * vtime);
+                    speed[i] = speed[i].Rotate((float)(curve[i] * vtime)) * (1f + acceleration[i]);
                 }
             }
         }

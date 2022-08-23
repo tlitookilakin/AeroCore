@@ -1,9 +1,12 @@
-﻿using Microsoft.Xna.Framework;
+﻿using AeroCore.Patches;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Buildings;
+using StardewValley.Objects;
+using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,8 +109,23 @@ namespace AeroCore.Utils
                 PagedResponseConfirmed.Value = null;
             }
         }
-        public static string GetStringID(this Item item) 
-            => ModEntry.DGA?.GetDGAItemId(item) ?? item.ParentSheetIndex.ToString();
+        public static string GetStringID(this Item item)
+        {
+            string ret = ModEntry.DGA?.GetDGAItemId(item);
+            if (ret is not null)
+                return ret;
+            string index = item.ParentSheetIndex.ToString();
+            string prefix =
+                item is Wallpaper wp ? wp.isFloor.Value ? "(FL)" : "(WP)" :
+                item is Clothing cl ? cl.clothesType.Value == 0 ? "(S)" : "(P)" :
+                item is Boots ? "(B)" :
+                item is Furniture ? "(F)" :
+                item is MeleeWeapon ? "(W)" :
+                item is Tool ? "(T)" :
+                item is StardewValley.Object o ? o.bigCraftable.Value ? "(BC)" : "(O)" :
+                "";
+            return prefix + index;
+        }
         public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
         {
             try
@@ -162,6 +180,7 @@ namespace AeroCore.Utils
                 return false;
             if (count == -1)
                 count = what.Stack;
+            what = ItemWrapper.UnwrapItem(what);
             List<Item> matched = new();
             int has = 0;
             foreach (var item in who.Items) 
@@ -207,6 +226,7 @@ namespace AeroCore.Utils
         {
             if (what is null)
                 return false;
+            what = ItemWrapper.UnwrapItem(what);
             int has = 0;
             foreach (var item in who.Items)
             {
@@ -226,12 +246,11 @@ namespace AeroCore.Utils
         public static Color Interpolate(this Color from, Color to, float amount)
         {
             amount = Math.Clamp(amount, 0f, 1f);
-            return new(
+            return new Color(
                 Lerp(from.R, to.R, amount),
                 Lerp(from.G, to.G, amount),
-                Lerp(from.B, to.B, amount),
-                Lerp(from.A, to.A, amount)
-            );
+                Lerp(from.B, to.B, amount)
+            ) * (Lerp(from.A, to.A, amount) / 255f);
         }
     }
 }

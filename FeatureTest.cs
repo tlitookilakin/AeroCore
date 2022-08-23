@@ -16,6 +16,7 @@ namespace AeroCore
     {
         private static IParticleManager particles;
         private static Emitter emitter;
+
         internal static void Init()
         {
             Patches.Action.ActionCursors.Add("Mailbox", 1);

@@ -126,9 +126,9 @@ namespace AeroCore.ReflectedValue
         }
         public ValueChain ValueRef<V>(string name)
             => new(Output, name, this);
-        public ValueChain MethodRef<V>(string name, params object[] args)
+        public ValueChain MethodRef<V>(string name, Type[] arg_types, params object[] args)
         {
-            var method = Output.MethodNamed(name);
+            var method = arg_types is null ? Output.MethodNamed(name) : Output.MethodNamed(name, arg_types);
             if (method is null)
                 throw new NullReferenceException($"Type '{Output.FullName}' does not contain method '{name}'.");
             else

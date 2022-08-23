@@ -80,5 +80,18 @@ namespace AeroCore.API
 
         /// <summary>Parses tokenized text.</summary>
         public string ParseTokenText(string format, Random r = null, ParseDialogueDelegate handle_additional_tags = null, Farmer target_farmer = null);
+        
+        /// <summary>Wraps an <see cref="Item"/> in an <see cref="StardewValley.Object"/>. Save safe.
+        /// Automatically unwrapped by most inventory methods. Will not wrap an Item if it is already an Object.</summary>
+        /// <param name="forceSubtype">Whether to wrap subtypes (big craftables, furniture, etc.) even though they are Objects.</param>
+        /// <returns>The wrapper containing the item.</returns>
+        public StardewValley.Object WrapItem(Item what, bool forceSubtype = false);
+
+        /// <summary>If the Object is an item wrapper, unwraps it. Otherwise, return it as-is.</summary>
+        public Item UnwrapItem(StardewValley.Object what);
+
+        /// <summary>Unwraps any wrapped items in a list.</summary>
+        /// <returns>The number of items unwrapped.</returns>
+        public int UnwrapItems(List<Item> items);
     }
 }

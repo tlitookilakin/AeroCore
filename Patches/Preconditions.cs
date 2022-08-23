@@ -28,7 +28,7 @@ namespace AeroCore.Patches
                 new(OpCodes.Ldelem_Ref),
                 new(OpCodes.Ldc_I4_0),
                 new(OpCodes.Callvirt, typeof(string).MethodNamed("get_Chars")),
-                new(OpCodes.Ldc_I4_S, (byte)'G')
+                new(OpCodes.Ldc_I4_S, (int)(byte)'G')
             })
             .AddJump(OpCodes.Bne_Un_S, "skip")
             .Add(new CodeInstruction[]

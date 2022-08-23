@@ -57,9 +57,9 @@ namespace AeroCore.Utils
         }
         public static ValueChain ValueRef(this Type type, string name)
             => new(type, name);
-        public static ValueChain MethodRef(this Type type, string name, params object[] args)
+        public static ValueChain MethodRef(this Type type, string name, Type[] arg_types, params object[] args)
         {
-            var method = type.MethodNamed(name);
+            var method = arg_types is null ? type.MethodNamed(name) : type.MethodNamed(name, arg_types);
             if (method is null)
                 throw new NullReferenceException($"Type '{type.FullName}' does not contain method '{name}'.");
             else

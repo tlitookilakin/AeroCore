@@ -79,7 +79,7 @@ namespace AeroCore.Particles
 
             for(int i = 0; i < positions.Length; i++)
             {
-                if (life[i] <= 0)
+                if (life[i] == 0)
                     continue;
 
                 var clife = life[i];

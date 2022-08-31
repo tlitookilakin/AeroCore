@@ -93,5 +93,8 @@ namespace AeroCore.API
         /// <summary>Unwraps any wrapped items in a list.</summary>
         /// <returns>The number of items unwrapped.</returns>
         public int UnwrapItems(List<Item> items);
+
+        /// <summary>Gets if an object is an item wrapper.</summary>
+        public bool IsWrappedItem(StardewValley.Object what);
     }
 }

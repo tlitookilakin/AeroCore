@@ -17,7 +17,7 @@ namespace AeroCore.Patches
     [ModInit]
     public class ItemWrapper
     {
-        const string WrapFlag = "tlitoo.aero.itemWrapper";
+        internal const string WrapFlag = "tlitoo.aero.itemWrapper";
         private static readonly MethodInfo ActionBase = typeof(SObject).MethodNamed(nameof(SObject.checkForAction));
 
         internal static void Init()

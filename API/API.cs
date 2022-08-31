@@ -232,6 +232,9 @@ namespace AeroCore.API
         public int UnwrapItems(List<Item> items)
             => Patches.ItemWrapper.UnwrapItemsInList(items);
 
+        public bool IsWrappedItem(StardewValley.Object what)
+            => what.modData.ContainsKey(Patches.ItemWrapper.WrapFlag);
+
         #endregion interface_accessible
         #region internals
 

@@ -11,6 +11,7 @@ namespace AeroCore.Backport
 {
 #pragma warning disable IDE1006 // Naming Styles
 #pragma warning disable IDE0060 // Remove unused parameter
+    [ModInit]
     internal class GameStateQuery
     {
         public delegate bool QueryDelegate(string[] condition_split);
@@ -27,7 +28,7 @@ namespace AeroCore.Backport
 
         protected static GameLocation _CurrentTargetGameLocation;
 
-        public static void SetupQueryTypes()
+        public static void Init()
         {
             if (_queryTypeLookup == null)
             {

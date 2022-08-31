@@ -55,25 +55,30 @@ namespace AeroCore.Utils
             s2.CopyTo(array.AsSpan(s1.Length));
             return new(array);
         }
-        public static void ShowPagedResponses(string question, Response[] responses, Action<Farmer, string> on_response, bool auto_select_single = false)
+        public static void ShowPagedResponses(this GameLocation where, string question, List<KeyValuePair<string, string>> responses, Action<Farmer, string> on_response, bool auto_select_single = false)
         {
-            if (responses.Length == 0)
+            if (responses.Count == 0)
                 return;
 
-            if (responses.Length == 1 && auto_select_single)
+            if (responses.Count == 1 && auto_select_single)
             {
-                on_response(Game1.player, responses[0].responseKey);
+                on_response(Game1.player, responses[0].Value);
                 return;
             }
 
-            PagedResponses.Value = new(responses);
+            List<Response> resp = new();
+            foreach(var pair in responses)
+                resp.Add(new(pair.Value, pair.Key)); 
+            // flip-flopped to match 1.6. don't ask me I don't know.
+
+            PagedResponses.Value = new(resp);
             PageIndex.Value = 0;
             PagedResponseConfirmed.Value = on_response;
             PagedQuestion.Value = question;
 
-            ShowResponsePage();
+            ShowResponsePage(where);
         }
-        private static void ShowResponsePage()
+        private static void ShowResponsePage(GameLocation where)
         {
             List<Response> visible = new();
             if (PageIndex.Value > 0)
@@ -87,7 +92,7 @@ namespace AeroCore.Utils
 
             visible.Add(new("_cancel", ModEntry.i18n.Get("misc.generic.cancel")));
 
-            Game1.currentLocation.createQuestionDialogue(PagedQuestion.Value, visible.ToArray(), HandlePagedResponse);
+            where.createQuestionDialogue(PagedQuestion.Value, visible.ToArray(), HandlePagedResponse);
         }
         private static void HandlePagedResponse(Farmer who, string key)
         {
@@ -97,7 +102,7 @@ namespace AeroCore.Utils
                     PageIndex.Value++;
                 else
                     PageIndex.Value--;
-                ShowResponsePage();
+                ShowResponsePage(who.currentLocation);
             }
             else
             {

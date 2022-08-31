@@ -217,11 +217,13 @@ namespace AeroCore.API
             => Backport.GameStateQuery.CheckConditions(condition_query, seeded_random, target_farmer, target_item, target_location);
 
         public void RegisterQueryType(string query_name, Func<string[], bool> query_delegate)
-            => Backport.GameStateQuery.RegisterQueryType(query_name, new(query_delegate));
+            => Backport.GameStateQuery.RegisterQueryType(query_name, query_delegate is null ? null : new(query_delegate));
 
         public string ParseTokenText(string format, Random r = null,
             IAeroCoreAPI.ParseDialogueDelegate handle_additional_tags = null, Farmer target_farmer = null)
-            => Backport.TextParser.ParseText(format, r, new(handle_additional_tags), target_farmer);
+            => Backport.TextParser.ParseText(format, r, 
+                handle_additional_tags is null ? null : new(handle_additional_tags), 
+                target_farmer);
 
         public StardewValley.Object WrapItem(Item what, bool forceSubtype = false)
             => Patches.ItemWrapper.WrapItem(what, forceSubtype);

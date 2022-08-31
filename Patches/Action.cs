@@ -21,19 +21,20 @@ namespace AeroCore.Patches
         private static readonly PerScreen<int> CurrentActionCursor = new();
 
         [HarmonyPatch(typeof(GameLocation),"performAction")]
-        [HarmonyPostfix]
-        internal static void performAction(string action, Farmer who, ref bool __result, GameLocation __instance, xTile.Dimensions.Location tileLocation)
+        [HarmonyPrefix]
+        internal static bool performAction(string action, Farmer who, ref bool __result, GameLocation __instance, xTile.Dimensions.Location tileLocation)
         {
             if (action == null || !who.IsLocalPlayer)
-                return;
+                return true;
 
             string name = action.GetChunk(' ', 0);
             if (!Actions.TryGetValue(name, out var exec))
-                return;
+                return true;
 
             int index = action.IndexOf(' ') + 1;
             __result = true;
-            exec(who, index > 0 ? action[index..] : "", new(tileLocation.X, tileLocation.Y), __instance);
+            exec(who, index > 0 && index < action.Length ? action[index..] : "", new(tileLocation.X, tileLocation.Y), __instance);
+            return false;
         }
 
         [HarmonyPatch(typeof(Game1),"updateCursorTileHint")]

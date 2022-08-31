@@ -9,6 +9,7 @@ using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -36,8 +37,8 @@ namespace AeroCore.Utils
         }
 
         public static Type TypeNamed(string name) => AccessTools.TypeByName(name);
-        public static MethodInfo MethodNamed(this Type type, string name) => AccessTools.Method(type, name);
-        public static MethodInfo MethodNamed(this Type type, string name, Type[] args) => AccessTools.Method(type, name, args);
+        public static MethodInfo MethodNamed(this Type type, string name, Type[] args = null) => AccessTools.Method(type, name, args);
+        public static MethodInfo DeclaredMethod(this Type type, string name, Type[] args = null) => AccessTools.DeclaredMethod(type, name, args);
         public static MethodInfo PropertyGetter(this Type type, string name) => AccessTools.PropertyGetter(type, name);
         public static MethodInfo PropertySetter(this Type type, string name) => AccessTools.PropertySetter(type, name);
         public static FieldInfo FieldNamed(this Type type, string name) => AccessTools.Field(type, name);
@@ -263,7 +264,10 @@ namespace AeroCore.Utils
         {
             if (original is null)
                 return false;
-            harmony.Patch(original, prefix, postfix, transpiler, finalizer);
+            try
+            { harmony.Patch(original, prefix, postfix, transpiler, finalizer); }
+            catch
+            { return false; }
             return true;
         }
     }

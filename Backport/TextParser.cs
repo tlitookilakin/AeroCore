@@ -17,10 +17,10 @@ namespace AeroCore.Backport
         {
             try
             {
-                TextParser._targetFarmer = target_farmer;
-                if (TextParser._targetFarmer == null)
+                _targetFarmer = target_farmer;
+                if (_targetFarmer == null)
                 {
-                    TextParser._targetFarmer = Game1.player;
+                    _targetFarmer = Game1.player;
                 }
                 if (format == null)
                 {
@@ -35,14 +35,14 @@ namespace AeroCore.Backport
                 {
                     if (format[i] == '[')
                     {
-                        i = TextParser._ParseTags(ref format, i, r, handle_additional_tags);
+                        i = _ParseTags(ref format, i, r, handle_additional_tags);
                     }
                 }
                 return format.Replace('\u00a0', ' ');
             }
             finally
             {
-                TextParser._targetFarmer = null;
+                _targetFarmer = null;
             }
         }
 
@@ -52,13 +52,13 @@ namespace AeroCore.Backport
             {
                 if (format[i] == '[')
                 {
-                    i = TextParser._ParseTags(ref format, i, r, handle_additional_tags);
+                    i = _ParseTags(ref format, i, r, handle_additional_tags);
                 }
                 else if (format[i] == ']')
                 {
                     string tag = format.Substring(start_index + 1, i - start_index - 1);
                     string replacement = null;
-                    if (TextParser._ParseTag(tag, ref replacement, r, handle_additional_tags))
+                    if (_ParseTag(tag, ref replacement, r, handle_additional_tags))
                     {
                         format = format.Remove(start_index, i - start_index + 1);
                         format = format.Insert(start_index, replacement);
@@ -131,12 +131,12 @@ namespace AeroCore.Backport
             }
             if (array[0] == "FarmName")
             {
-                replacement = TextParser._targetFarmer.farmName.Value;
+                replacement = _targetFarmer.farmName.Value;
                 return true;
             }
             if (array[0] == "FarmerUniqueID")
             {
-                replacement = TextParser._targetFarmer.UniqueMultiplayerID.ToString();
+                replacement = _targetFarmer.UniqueMultiplayerID.ToString();
                 return true;
             }
             if (array[0] == "PositiveAdjective")
@@ -151,7 +151,7 @@ namespace AeroCore.Backport
             }
             if (array[0] == "GenderedText")
             {
-                if (TextParser._targetFarmer.IsMale)
+                if (_targetFarmer.IsMale)
                 {
                     replacement = array[1];
                 }
@@ -164,20 +164,20 @@ namespace AeroCore.Backport
             if (array[0] == "SpouseGenderedText")
             {
                 bool flag = false;
-                if (TextParser._targetFarmer.team.GetSpouse(TextParser._targetFarmer.UniqueMultiplayerID).HasValue)
+                if (_targetFarmer.team.GetSpouse(_targetFarmer.UniqueMultiplayerID).HasValue)
                 {
-                    if (Game1.getFarmerMaybeOffline(TextParser._targetFarmer.team.GetSpouse(TextParser._targetFarmer.UniqueMultiplayerID).Value).IsMale)
+                    if (Game1.getFarmerMaybeOffline(_targetFarmer.team.GetSpouse(_targetFarmer.UniqueMultiplayerID).Value).IsMale)
                     {
                         flag = true;
                     }
                 }
                 else
                 {
-                    if (TextParser._targetFarmer.getSpouse() == null)
+                    if (_targetFarmer.getSpouse() == null)
                     {
                         return false;
                     }
-                    if (TextParser._targetFarmer.getSpouse().Gender == 0)
+                    if (_targetFarmer.getSpouse().Gender == 0)
                     {
                         flag = true;
                     }
@@ -194,13 +194,13 @@ namespace AeroCore.Backport
             }
             if (array[0] == "SpouseFarmerText")
             {
-                if (TextParser._targetFarmer.team.GetSpouse(TextParser._targetFarmer.UniqueMultiplayerID).HasValue)
+                if (_targetFarmer.team.GetSpouse(_targetFarmer.UniqueMultiplayerID).HasValue)
                 {
                     replacement = array[1];
                 }
                 else
                 {
-                    if (TextParser._targetFarmer.getSpouse() == null)
+                    if (_targetFarmer.getSpouse() == null)
                     {
                         return false;
                     }
@@ -234,7 +234,7 @@ namespace AeroCore.Backport
             else if (array[0] == "EscapedText")
             {
                 replacement = string.Join(" ", array.Skip(1).ToArray());
-                replacement = TextParser.EscapeSpaces(replacement);
+                replacement = EscapeSpaces(replacement);
                 return true;
             }
             return false;

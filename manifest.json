@@ -1,10 +1,10 @@
 ﻿{
   "Name": "AeroCore",
   "Author": "Tlitookilakin",
-  "Version": "1.0.0",
+  "Version": "1.0.0-ALPHA.1",
   "Description": "A utility coremod",
   "UniqueID": "tlitookilakin.AeroCore",
   "EntryDll": "AeroCore.dll",
   "MinimumApiVersion": "3.14",
-  "UpdateKeys": [ "Nexus:" ]
+  "UpdateKeys": [ "GitHub:Tlitookilakin/AeroCore" ]
 }

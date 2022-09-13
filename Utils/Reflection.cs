@@ -264,10 +264,7 @@ namespace AeroCore.Utils
         {
             if (original is null)
                 return false;
-            try
-            { harmony.Patch(original, prefix, postfix, transpiler, finalizer); }
-            catch
-            { return false; }
+            harmony.Patch(original, prefix, postfix, transpiler, finalizer);
             return true;
         }
     }

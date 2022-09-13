@@ -1,9 +1,9 @@
-﻿using AeroCore.Patches;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.Buildings;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -13,12 +13,25 @@ using System.Linq;
 
 namespace AeroCore.Utils
 {
+    [ModInit]
     public static class Misc
     {
         private static readonly PerScreen<List<Response>> PagedResponses = new(() => new());
         private static readonly PerScreen<int> PageIndex = new();
         private static readonly PerScreen<Action<Farmer, string>> PagedResponseConfirmed = new();
         private static readonly PerScreen<string> PagedQuestion = new();
+
+        public static event Action NextGameTick;
+
+        internal static void Init()
+        {
+            ModEntry.helper.Events.GameLoop.UpdateTicked += (s, e) =>
+            {
+                NextGameTick?.Invoke();
+                NextGameTick = null;
+            };
+        }
+
         public static Point LocalToGlobal(int x, int y) => new(x + Game1.viewport.X, y + Game1.viewport.Y);
         public static Point LocalToGlobal(Point pos) => LocalToGlobal(pos.X, pos.Y);
         public static Vector2 LocalToGlobal(float x, float y) => new(x + Game1.viewport.X, y + Game1.viewport.Y);
@@ -185,7 +198,7 @@ namespace AeroCore.Utils
                 return false;
             if (count == -1)
                 count = what.Stack;
-            what = ItemWrapper.UnwrapItem(what);
+            what = Patches.ItemWrapper.UnwrapItem(what);
             List<Item> matched = new();
             int has = 0;
             foreach (var item in who.Items) 
@@ -231,7 +244,7 @@ namespace AeroCore.Utils
         {
             if (what is null)
                 return false;
-            what = ItemWrapper.UnwrapItem(what);
+            what = Patches.ItemWrapper.UnwrapItem(what);
             int has = 0;
             foreach (var item in who.Items)
             {

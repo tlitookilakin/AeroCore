@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.BellsAndWhistles;
 using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
@@ -9,9 +11,30 @@ using xTile.Layers;
 
 namespace AeroCore.Utils
 {
+    [ModInit]
     public static class Maps
     {
-        public static string[] MapPropertyArray(GameLocation loc, string prop) => loc.getMapProperty(prop).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        private static IReflectedField<ScreenFade> gameFade;
+        private static readonly PerScreen<bool> skipFade = new();
+
+        public static GameLocation EventVoid => evoid.Value;
+        private static readonly Lazy<GameLocation> evoid = new(() => CreateTempLocation("EventVoid"));
+
+        internal static void Init()
+        {
+            gameFade = ModEntry.helper.Reflection.GetField<ScreenFade>(typeof(Game1), "screenFade");
+            Patches.FadeHooks.AfterFadeOut += checkSkipFadeIn;
+        }
+
+        private static void checkSkipFadeIn(int screen)
+        {
+            if (skipFade.Value)
+                gameFade.GetValue().fadeToBlackAlpha = -1f;
+            skipFade.Value = false;
+        }
+
+        public static string[] MapPropertyArray(GameLocation loc, string prop) => 
+            loc.getMapProperty(prop).Split(' ', StringSplitOptions.RemoveEmptyEntries);
         public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(Layer layer)
         {
             if (layer == null)
@@ -44,8 +67,6 @@ namespace AeroCore.Utils
         {
             GameLocation temp = new(PathUtilities.NormalizeAssetName("Maps/" + path), "Temp");
             temp.map.LoadTileSheets(Game1.mapDisplayDevice);
-            //if (path.Trim() == "EventVoid")
-                //Events.drawVoid.Value = true; //anti-flicker
             Event e = Game1.currentLocation.currentEvent;
             Game1.currentLocation.cleanupBeforePlayerExit();
             Game1.currentLocation.currentEvent = null;
@@ -56,6 +77,51 @@ namespace AeroCore.Utils
             Game1.player.currentLocation = Game1.currentLocation;
             who.currentLocation = Game1.currentLocation;
             Game1.panScreen(0, 0);
+        }
+        public static LocationRequest RequestLocationOf(GameLocation location)
+            => new(location.NameOrUniqueName, false, location);
+        public static GameLocation CreateTempLocation(string path)
+        {
+            GameLocation loc = new(PathUtilities.NormalizeAssetName($"Maps/{path}"), "Temp");
+            loc.map.LoadTileSheets(Game1.mapDisplayDevice);
+            return loc;
+        }
+        public static LocationRequest GetTempLocation(string path)
+            => RequestLocationOf(CreateTempLocation(path));
+        public static void QuickWarp(LocationRequest request, int x, int y, int facing)
+        {
+            skipFade.Value = true;
+            Game1.warpFarmer(request, x, y, facing);
+            gameFade.GetValue().fadeToBlackAlpha = 2f;
+        }
+        public static void QuickWarp(string name, int x, int y, bool flip)
+            => QuickWarp(Game1.getLocationRequest(name), x, y, flip ? ((Game1.player.FacingDirection + 2) % 4) : Game1.player.FacingDirection);
+        public static void QuickWarp(string name, int x, int y, int facing)
+            => QuickWarp(Game1.getLocationRequest(name), x, y, facing);
+        public static void QuickWarp(string name, int x, int y, int facing, bool structure)
+            => QuickWarp(Game1.getLocationRequest(name, structure), x, y, facing);
+        public static void ReloadCurrentLocation(bool quick = false)
+        {
+            var pos = Game1.player.getTileLocationPoint();
+            var loc = Game1.player.currentLocation;
+            var facing = Game1.player.FacingDirection;
+            var screen = Context.ScreenId;
+
+            ModEntry.api.AfterThisFadeIn(() =>
+            {
+                Misc.NextGameTick += () =>
+                {
+                    if (quick)
+                        skipFade.Value = true;
+                    Game1.warpFarmer(RequestLocationOf(loc), pos.X, pos.Y, facing);
+                    gameFade.GetValue().fadeToBlackAlpha = 2f;
+                };
+            });
+
+            skipFade.Value = true;
+            Game1.warpFarmer(RequestLocationOf(EventVoid), 0, 0, 0);
+            if (quick)
+                gameFade.GetValue().fadeToBlackAlpha = 2f;
         }
         public static Point ToPoint(this xTile.Dimensions.Location loc) => new(loc.X, loc.Y);
         public static Rectangle ToRect(this xTile.Dimensions.Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);

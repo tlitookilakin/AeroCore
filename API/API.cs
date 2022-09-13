@@ -24,6 +24,8 @@ namespace AeroCore.API
         public event Action<IHeldItemEventArgs> ItemHeldEvent;
         public event Action<IHeldItemEventArgs> StopItemHeldEvent;
         public event Action<GameLocation> LocationCleanup;
+        public event Action<int> AfterFadeOut;
+        public event Action<int> AfterFadeIn;
 
         public void RegisterAction(string name, IAeroCoreAPI.ActionHandler action, int cursor = 0)
         {
@@ -175,7 +177,11 @@ namespace AeroCore.API
         }
         public void InitAll(params object[] args)
         {
-            foreach(var type in Assembly.GetCallingAssembly().DefinedTypes)
+            List<MethodInfo> calls = new();
+            var ass = Assembly.GetCallingAssembly();
+            if (ass is null || ass.FullName == "StardewModdingAPI")
+                throw new Exception("Could not find caller! Do you need to use NoInling?");
+            foreach (var type in ass.DefinedTypes)
             {
                 var init = type.GetCustomAttribute<ModInitAttribute>();
                 if (init is not null)
@@ -185,12 +191,17 @@ namespace AeroCore.API
                         continue;
                     var m = AccessTools.DeclaredMethod(type, method);
                     if (m is not null && m.IsStatic)
-                    {
-                        try { m.Invoke(null, args); }
-                        catch(Exception e) {
-                            ModEntry.monitor.Log($"Exception initing class {type.AssemblyQualifiedName}:\n{e}", LogLevel.Error); 
-                        }
-                    }
+                        calls.Add(m);
+                }
+            }
+            ModEntry.monitor.Log($"Init scan complete, found {calls.Count} methods in {ass.FullName}.");
+            for (int i = 0; i < calls.Count; i++)
+            {
+                var call = calls[i];
+                try { call.Invoke(null, args); }
+                catch (Exception e)
+                {
+                    ModEntry.monitor.Log($"Exception calling init '{call.DeclaringType.FullName}.{call.Name}':\n{e}", LogLevel.Error);
                 }
             }
         }
@@ -237,6 +248,12 @@ namespace AeroCore.API
         public bool IsWrappedItem(StardewValley.Object what)
             => what.modData.ContainsKey(Patches.ItemWrapper.WrapFlag);
 
+        public void AfterThisFadeOut(Action action)
+            => afterFadeOut.Value.Add(action);
+
+        public void AfterThisFadeIn(Action action)
+            => afterFadeIn.Value.Add(action);
+
         #endregion interface_accessible
         #region internals
 
@@ -244,6 +261,8 @@ namespace AeroCore.API
         private static readonly Dictionary<IManifest, Dictionary<PropertyInfo, object>> defaultConfigValues = new();
         internal static readonly Dictionary<string, Func<IParticleBehavior>> knownPartBehaviors = new(StringComparer.OrdinalIgnoreCase);
         internal static readonly Dictionary<string, Func<IParticleSkin>> knownPartSkins = new(StringComparer.OrdinalIgnoreCase);
+        internal static readonly PerScreen<List<Action>> afterFadeOut = new(() => new());
+        internal static readonly PerScreen<List<Action>> afterFadeIn = new(() => new());
         internal API() {
             Patches.Lighting.LightingEvent += (e) => LightingEvent?.Invoke(e);
             Patches.UseItem.OnUseItem += (e) => UseItemEvent?.Invoke(e);
@@ -251,6 +270,26 @@ namespace AeroCore.API
             Patches.UseItem.OnItemHeld += (e) => ItemHeldEvent?.Invoke(e);
             Patches.UseItem.OnStopItemHeld += (e) => StopItemHeldEvent?.Invoke(e);
             Patches.LocationCleanup.Cleanup += (e) => LocationCleanup?.Invoke(e);
+            Patches.FadeHooks.AfterFadeIn += (e) =>
+            {
+                AfterFadeIn?.Invoke(e);
+                var once = afterFadeOut.GetValueForScreen(e);
+                for (int i = once.Count - 1; i >= 0; i--)
+                {
+                    once[i]();
+                    once.RemoveAt(i);
+                }
+            };
+            Patches.FadeHooks.AfterFadeOut += (e) =>
+            {
+                AfterFadeOut?.Invoke(e);
+                var once = afterFadeIn.GetValueForScreen(e);
+                for (int i = once.Count - 1; i >= 0; i--)
+                {
+                    once[i]();
+                    once.RemoveAt(i);
+                }
+            };
 
             knownPartBehaviors.Add("simple", () => new SimpleBehavior());
             knownPartSkins.Add("simple", () => new SimpleSkin());

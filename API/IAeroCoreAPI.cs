@@ -19,6 +19,8 @@ namespace AeroCore.API
         public event Action<IHeldItemEventArgs> ItemHeldEvent;
         public event Action<IHeldItemEventArgs> StopItemHeldEvent;
         public event Action<GameLocation> LocationCleanup;
+        public event Action<int> AfterFadeOut;
+        public event Action<int> AfterFadeIn;
 
         /// <summary>Registers a custom action</summary>
         /// <param name="name">The name of the action</param>
@@ -96,5 +98,11 @@ namespace AeroCore.API
 
         /// <summary>Gets if an object is an item wrapper.</summary>
         public bool IsWrappedItem(StardewValley.Object what);
+
+        /// <summary>Adds a one-time call after the current screen's fade out is done.</summary>
+        public void AfterThisFadeOut(Action action);
+
+        /// <summary>Adds a one-time call after the current screen's fade in is done.</summary>
+        public void AfterThisFadeIn(Action action);
     }
 }

@@ -6,6 +6,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
 using System.Runtime.CompilerServices;
+using xTile;
 
 namespace AeroCore
 {
@@ -62,6 +63,11 @@ namespace AeroCore
         {
             if (Config.CursorLightHold)
                 User.isLightActive = false;
+        }
+        private static void LoadAssets(object _, AssetRequestedEventArgs ev)
+        {
+            if (ev.NameWithoutLocale.IsEquivalentTo("Maps/EventVoid"))
+                ev.LoadFromModFile<Map>("assets/eventvoid.tbin", AssetLoadPriority.High);
         }
     }
 }

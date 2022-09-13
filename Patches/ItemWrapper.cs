@@ -168,15 +168,12 @@ namespace AeroCore.Patches
             .AddLabel("found")
             .Finish();
 
-        [HarmonyPatch(typeof(SObject), nameof(SObject._GetOneFrom))]
+        [HarmonyPatch(typeof(SObject), nameof(SObject.getOne))]
         [HarmonyPostfix]
-        internal static void GetOnePatch(SObject __instance, Item source)
+        internal static Item GetOnePatch(Item what, SObject __instance)
         {
-            if (source is Sign os && __instance is Sign s && source.modData.ContainsKey(WrapFlag))
-            {
-                s.displayItem.Value = os.displayItem.Value;
-                s.modData[WrapFlag] = "T";
-            }
+            return (__instance is Sign s && __instance.modData.ContainsKey(WrapFlag)) ?
+                s.heldObject.Value?.getOne() : what;
         }
 
         private static void ReplaceItem(ref Item item)

@@ -89,6 +89,10 @@ namespace AeroCore.Utils
             var v = to - from;
             return Math.Atan2(v.Y, v.X);
         }
+        public static Point Next(this Random rand, Rectangle rect)
+            => new(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
+        public static T Next<T>(this Random rand, IList<T> items)
+            => items.Count > 0 ? items[rand.Next(items.Count)] : default;
 
         public static bool TryGetKey<K, V>(this IDictionary<K, V> dict, V value, out K key)
         {

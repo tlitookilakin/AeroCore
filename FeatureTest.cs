@@ -29,17 +29,13 @@ namespace AeroCore
             ModEntry.helper.Events.GameLoop.UpdateTicked += Tick;
             ModEntry.helper.Events.Display.RenderedHud += Draw;
             ModEntry.helper.Events.Input.CursorMoved += MouseMoved;
-            ModEntry.helper.Events.Input.ButtonReleased += KeyReleased;
+            //ModEntry.helper.Events.Input.ButtonReleased += KeyReleased;
             particles.Tick(0);
         }
         private static void KeyReleased(object _, ButtonReleasedEventArgs ev)
         {
             if (ev.IsSuppressed())
                 return;
-            if (ev.Button == SButton.J)
-                Maps.ReloadCurrentLocation();
-            else if (ev.Button == SButton.N)
-                Maps.ReloadCurrentLocation(true);
         }
         private static void MouseMoved(object _, CursorMovedEventArgs ev)
         {

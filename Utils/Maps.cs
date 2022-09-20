@@ -14,22 +14,20 @@ namespace AeroCore.Utils
     [ModInit]
     public static class Maps
     {
-        private static IReflectedField<ScreenFade> gameFade;
         private static readonly PerScreen<bool> skipFade = new();
 
         public static GameLocation EventVoid => evoid.Value;
-        private static readonly Lazy<GameLocation> evoid = new(() => CreateTempLocation("EventVoid"));
+        private static readonly Lazy<GameLocation> evoid = new(() => CreateTempLocation("Maps/EventVoid"));
 
         internal static void Init()
         {
-            gameFade = ModEntry.helper.Reflection.GetField<ScreenFade>(typeof(Game1), "screenFade");
             Patches.FadeHooks.AfterFadeOut += checkSkipFadeIn;
         }
 
         private static void checkSkipFadeIn(int screen)
         {
             if (skipFade.Value)
-                gameFade.GetValue().fadeToBlackAlpha = -1f;
+                Patches.FadeHooks.gameFade.Value.fadeToBlackAlpha = -1f;
             skipFade.Value = false;
         }
 
@@ -82,7 +80,7 @@ namespace AeroCore.Utils
             => new(location.NameOrUniqueName, false, location);
         public static GameLocation CreateTempLocation(string path)
         {
-            GameLocation loc = new(PathUtilities.NormalizeAssetName($"Maps/{path}"), "Temp");
+            GameLocation loc = new(PathUtilities.NormalizeAssetName(path), "Temp");
             loc.map.LoadTileSheets(Game1.mapDisplayDevice);
             return loc;
         }
@@ -92,7 +90,7 @@ namespace AeroCore.Utils
         {
             skipFade.Value = true;
             Game1.warpFarmer(request, x, y, facing);
-            gameFade.GetValue().fadeToBlackAlpha = 2f;
+            Patches.FadeHooks.gameFade.Value.fadeToBlackAlpha = 2f;
         }
         public static void QuickWarp(string name, int x, int y, bool flip)
             => QuickWarp(Game1.getLocationRequest(name), x, y, flip ? ((Game1.player.FacingDirection + 2) % 4) : Game1.player.FacingDirection);
@@ -114,14 +112,14 @@ namespace AeroCore.Utils
                     if (quick)
                         skipFade.Value = true;
                     Game1.warpFarmer(RequestLocationOf(loc), pos.X, pos.Y, facing);
-                    gameFade.GetValue().fadeToBlackAlpha = 2f;
+                    Patches.FadeHooks.gameFade.Value.fadeToBlackAlpha = 2f;
                 };
             });
 
             skipFade.Value = true;
             Game1.warpFarmer(RequestLocationOf(EventVoid), 0, 0, 0);
             if (quick)
-                gameFade.GetValue().fadeToBlackAlpha = 2f;
+                Patches.FadeHooks.gameFade.Value.fadeToBlackAlpha = 2f;
         }
         public static Point ToPoint(this xTile.Dimensions.Location loc) => new(loc.X, loc.Y);
         public static Rectangle ToRect(this xTile.Dimensions.Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);

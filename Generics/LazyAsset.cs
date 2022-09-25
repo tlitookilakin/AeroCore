@@ -37,7 +37,10 @@ namespace AeroCore.Generics
         private readonly IModHelper helper;
         private T cached = default;
         private bool isCached = false;
+
         public T Value => GetAsset();
+        public string LastError { get; private set; } = null;
+        public bool CatchErrors { get; set; } = false;
 
         public LazyAsset(IModHelper Helper, Func<string> AssetPath, bool IgnoreLocale = true)
         {
@@ -51,8 +54,24 @@ namespace AeroCore.Generics
         {
             if (!isCached)
             {
+                LastError = null;
                 isCached = true;
-                cached = helper.GameContent.Load<T>(getPath());
+                if (CatchErrors)
+                {
+                    try
+                    {
+                        cached = helper.GameContent.Load<T>(getPath());
+                    }
+                    catch (Exception e)
+                    {
+                        LastError = e.ToString();
+                        cached = default;
+                    }
+                }
+                else
+                {
+                    cached = helper.GameContent.Load<T>(getPath());
+                }
             }
             return cached;
         }
@@ -60,6 +79,7 @@ namespace AeroCore.Generics
         {
             cached = default;
             isCached = false;
+            LastError = null;
         }
     }
 }

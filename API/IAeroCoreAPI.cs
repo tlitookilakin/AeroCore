@@ -104,5 +104,8 @@ namespace AeroCore.API
 
         /// <summary>Adds a one-time call after the current screen's fade in is done.</summary>
         public void AfterThisFadeIn(Action action);
+
+        /// <summary>Forces a spawned object to not be removed on sundays.</summary>
+        public void PersistSpawnedObject(StardewValley.Object what, bool persist = true);
     }
 }

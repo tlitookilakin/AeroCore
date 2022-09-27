@@ -60,7 +60,10 @@ namespace AeroCore
             var place = ItemWrapper.WrapItem(held.getOne(), true);
             if (tile != Game1.player.getTileLocation() && where.isTileLocationTotallyClearAndPlaceableIgnoreFloors(tile))
             {
-                place.placementAction(where, (int)tile.X * 64, (int)tile.Y * 64, Game1.player);
+                where.Objects[tile] = place;
+                place.TileLocation = tile;
+                place.IsSpawnedObject = true;
+                PersistSpawned.SetPersist(place);
                 Game1.player.reduceActiveItemByOne();
                 where.playSoundAt("axchop", tile);
             } else

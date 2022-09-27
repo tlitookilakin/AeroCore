@@ -30,7 +30,7 @@ namespace AeroCore.Generics
                 }
             }
         }
-        internal abstract void Reload();
+        public abstract void Reload();
     }
     public class LazyAsset<T> : LazyAsset
     {
@@ -75,7 +75,7 @@ namespace AeroCore.Generics
             }
             return cached;
         }
-        internal override void Reload()
+        public override void Reload()
         {
             cached = default;
             isCached = false;

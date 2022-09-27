@@ -254,10 +254,13 @@ namespace AeroCore.API
         public void AfterThisFadeIn(Action action)
             => afterFadeIn.Value.Add(action);
 
-        #endregion interface_accessible
-        #region internals
+        public void PersistSpawnedObject(StardewValley.Object what, bool persist = true)
+            => Patches.PersistSpawned.SetPersist(what, persist);
 
-        private static IGMCMAPI gmcm;
+		#endregion interface_accessible
+		#region internals
+
+		private static IGMCMAPI gmcm;
         private static readonly Dictionary<IManifest, Dictionary<PropertyInfo, object>> defaultConfigValues = new();
         internal static readonly Dictionary<string, Func<IParticleBehavior>> knownPartBehaviors = new(StringComparer.OrdinalIgnoreCase);
         internal static readonly Dictionary<string, Func<IParticleSkin>> knownPartSkins = new(StringComparer.OrdinalIgnoreCase);

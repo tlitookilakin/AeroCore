@@ -209,6 +209,25 @@ namespace AeroCore.Utils
             crop = new(ind, x, y);
             return true;
         }
+        public static int GetDeterministicHashCode(this string value)
+        {
+			int count = value.Length;
+			int hash1 = 352654597;
+			int hash2 = hash1;
+			int i;
+			for (i = 0; i < count; i++)
+			{
+				int c = value[i];
+				hash1 = ((hash1 << 5) + hash1) ^ c;
+				if (++i >= count)
+				{
+					break;
+				}
+				c = value[i];
+				hash2 = ((hash2 << 5) + hash2) ^ c;
+			}
+			return hash1 + hash2 * 1566083941;
+		}
         /// <returns>A copy of the string with all whitespace stripped</returns>
         public static string Collapse(this string str)
         {

@@ -31,7 +31,7 @@ namespace AeroCore.Utils
             skipFade.Value = false;
         }
 
-        public static string[] MapPropertyArray(GameLocation loc, string prop) => 
+        public static string[] MapPropertyArray(this GameLocation loc, string prop) => 
             loc.getMapProperty(prop).Split(' ', StringSplitOptions.RemoveEmptyEntries);
         public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(Layer layer)
         {

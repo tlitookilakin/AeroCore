@@ -105,7 +105,7 @@ namespace AeroCore.Patches
             if (!__instance.modData.ContainsKey(WrapFlag))
                 return true;
             __result = false;
-            if (!justCheckingForActivity && !__instance.modData.ContainsKey("tlitoo.mumps.noPickup") &&
+            if (!justCheckingForActivity && (!__instance.modData.ContainsKey("tlitoo.mumps.noPickup") || __instance.IsSpawnedObject) &&
                 who.couldInventoryAcceptThisItem(__instance.displayItem.Value))
             {
                 if (who.IsLocalPlayer)

@@ -93,8 +93,12 @@ namespace AeroCore.Utils
             => new(rand.Next(rect.Left, rect.Right), rand.Next(rect.Top, rect.Bottom));
         public static T Next<T>(this Random rand, IList<T> items)
             => items.Count > 0 ? items[rand.Next(items.Count)] : default;
+        public static int Next(this Random rand, Range range)
+            => rand.Next(
+                range.Start.IsFromEnd ? int.MaxValue - range.Start.Value : range.Start.Value, 
+                range.End.IsFromEnd ? int.MaxValue - range.End.Value : range.End.Value);
 
-        public static bool TryGetKey<K, V>(this IDictionary<K, V> dict, V value, out K key)
+		public static bool TryGetKey<K, V>(this IDictionary<K, V> dict, V value, out K key)
         {
             foreach((var kk, var vv) in dict)
             {

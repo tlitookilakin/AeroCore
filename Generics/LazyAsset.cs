@@ -41,6 +41,7 @@ namespace AeroCore.Generics
         public T Value => GetAsset();
         public string LastError { get; private set; } = null;
         public bool CatchErrors { get; set; } = false;
+        public event Action<LazyAsset<T>> AssetReloaded;
 
         public LazyAsset(IModHelper Helper, Func<string> AssetPath, bool IgnoreLocale = true)
         {
@@ -80,6 +81,7 @@ namespace AeroCore.Generics
             cached = default;
             isCached = false;
             LastError = null;
+            AssetReloaded?.Invoke(this);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using StardewModdingAPI;
 using StardewModdingAPI.Utilities;
@@ -269,6 +270,30 @@ namespace AeroCore.Utils
                 Lerp(from.G, to.G, amount),
                 Lerp(from.B, to.B, amount)
             ) * (Lerp(from.A, to.A, amount) / 255f);
+        }
+        public static bool TryGetCue(this ISoundBank soundBank, string name, out ICue cue)
+        {
+            try
+            {
+                cue = soundBank.GetCue(name);
+            } catch
+            {
+                cue = null;
+                return false;
+            }
+            return true;
+        }
+        public static bool TryGetCueDefinition(this ISoundBank soundBank, string name, out CueDefinition cue)
+        {
+            try
+            {
+                cue = soundBank.GetCueDefinition(name);
+            } catch
+            {
+                cue = null;
+                return false;
+            }
+            return true;
         }
     }
 }

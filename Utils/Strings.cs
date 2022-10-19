@@ -150,6 +150,8 @@ namespace AeroCore.Utils
             if (item is not null)
                 return true;
             int id, i;
+			/* JA does not use namespaced ids, and internal id format may change in 1.6
+			 * so removing direct access for now
             if ((id = ModEntry.JA?.GetObjectId(str) ?? -1) != -1)
                 i = 0;
             else if ((id = ModEntry.JA?.GetBigCraftableId(str) ?? -1) != -1)
@@ -160,9 +162,8 @@ namespace AeroCore.Utils
                 i = 7;
             else if ((id = ModEntry.JA?.GetClothingId(str) ?? -1) != -1)
                 i = 8;
-            else
-            {
-                i = 0;
+            else */
+			i = 0;
                 while (i < ObjectPrefixes.Length)
                     if (str.StartsWith(ObjectPrefixes[i]))
                         break;
@@ -175,7 +176,6 @@ namespace AeroCore.Utils
                     clip = ObjectPrefixes[i].Length;
                 if (!int.TryParse(str[clip..], out id))
                     return false;
-            }
             switch (i)
             {
                 case 0: item = new SObject(id, 1); return true; 

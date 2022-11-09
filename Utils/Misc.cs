@@ -295,5 +295,15 @@ namespace AeroCore.Utils
             }
             return true;
         }
+        public static Rectangle Clamp(this Rectangle source, Rectangle bounds)
+        {
+            Point origin = new(
+                Math.Clamp(source.X, bounds.Left, bounds.Right),
+                Math.Clamp(source.Y, bounds.Top, bounds.Bottom));
+            Point size = new(
+                Math.Clamp(source.Width, bounds.Left - origin.X, bounds.Right - origin.X),
+                Math.Clamp(source.Height, bounds.Top - origin.Y, bounds.Bottom - origin.Y));
+            return new(origin, size);
+        }
     }
 }

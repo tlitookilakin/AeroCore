@@ -144,52 +144,47 @@ namespace AeroCore.Utils
             return string.Join(PathUtilities.PreferredAssetSeparator, PathUtilities.GetSegments(name.ToString())[count..]);
         }
         public static bool TryGetItem(this string str, out Item item, Color? color = null)
-        {
-            str = str.Trim();
+		{
+            int i = 0;
+			str = str.Trim();
             item = ModEntry.DGA?.SpawnDGAItem(str, color) as Item;
-            if (item is not null)
-                return true;
-            int id, i;
-			/* JA does not use namespaced ids, and internal id format may change in 1.6
-			 * so removing direct access for now
-            if ((id = ModEntry.JA?.GetObjectId(str) ?? -1) != -1)
-                i = 0;
-            else if ((id = ModEntry.JA?.GetBigCraftableId(str) ?? -1) != -1)
-                i = 1;
-            else if ((id = ModEntry.JA?.GetWeaponId(str) ?? -1) != -1)
-                i = 6;
-            else if ((id = ModEntry.JA?.GetHatId(str) ?? -1) != -1)
-                i = 7;
-            else if ((id = ModEntry.JA?.GetClothingId(str) ?? -1) != -1)
-                i = 8;
-            else */
-			i = 0;
+            var isDGAItem = item is not null;
+            // JA does not use namespaced ids, and internal id format may change in 1.6
+			// so removing direct access for now
+            if (item is null)
+            {
                 while (i < ObjectPrefixes.Length)
                     if (str.StartsWith(ObjectPrefixes[i]))
                         break;
                     else
                         i++;
                 int clip = 0;
-                if(i >= ObjectPrefixes.Length)
+                if (i >= ObjectPrefixes.Length)
                     i = 0;
                 else
                     clip = ObjectPrefixes[i].Length;
-                if (!int.TryParse(str[clip..], out id))
+                if (!int.TryParse(str[clip..], out int id))
                     return false;
-            switch (i)
-            {
-                case 0: item = new SObject(id, 1); return true; 
-                case 1: item = new SObject(Vector2.Zero, id); return true;
-                case 2: item = new Furniture(id, Vector2.Zero); return true;
-                case 3: item = new Boots(id); return true;
-                case 4: item = new Wallpaper(id, true); return true;
-                case 5: item = new Wallpaper(id, false); return true;
-                case 6: item = new MeleeWeapon(id); return true;
-                case 7: item = new Hat(id); return true;
-                case 8 or 9: item = new Clothing(id); return true;
+                item = i switch
+                {
+                    0 => new SObject(id, 1),
+                    1 => new SObject(Vector2.Zero, id),
+                    2 => new Furniture(id, Vector2.Zero),
+                    3 => new Boots(id),
+                    4 => new Wallpaper(id, true),
+                    5 => new Wallpaper(id, false),
+                    6 => new MeleeWeapon(id),
+                    7 => new Hat(id),
+                    8 or 9 => new Clothing(id),
+                    _ => null
+                };
             }
-            item = null;
-            return false;
+            if (item is null)
+                return false;
+			item.modData["tlitoo.aerocore.preservedID"] = str;
+            if (isDGAItem)
+                item.modData["tlitoo.aerocore.IsDGAItem"] = "T";
+			return true;
         }
         public static bool TryGetFruitTree(this string id, out FruitTree tree, int stage = -1)
         {

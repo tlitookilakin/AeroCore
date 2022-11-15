@@ -15,11 +15,12 @@ namespace AeroCore.Backport
 		public int Quality { get; set; } = -1;
 		public int ToolUpgradeLevel { get; set; } = -1;
 		public bool IsRecipe { get; set; }
+		public string Condition { get; set; }
 		public List<QuantityModifier> StackModifiers { get; set; }
 		public QuantityModifier.QuantityModifierMode StackModifierMode { get; set; }
 		public List<QuantityModifier> QualityModifiers { get; set; }
 		public QuantityModifier.QuantityModifierMode QualityModifierMode { get; set; }
-		public Item Spawn(Farmer who = null, GameLocation where = null)
+		public virtual Item Spawn(Farmer who = null, GameLocation where = null)
 		{
 			var id = ItemId;
 			if (id is null || !id.TryGetItem(out var item))

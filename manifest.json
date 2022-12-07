@@ -6,5 +6,5 @@
   "UniqueID": "tlitookilakin.AeroCore",
   "EntryDll": "AeroCore.dll",
   "MinimumApiVersion": "3.14",
-  "UpdateKeys": [ "GitHub:Tlitookilakin/AeroCore" ]
+  "UpdateKeys": [ "GitHub:Tlitookilakin/AeroCore", "Nexus:14700" ]
 }

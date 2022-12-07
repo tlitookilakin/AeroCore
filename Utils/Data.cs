@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI;
+using StardewModdingAPI.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -111,5 +113,18 @@ namespace AeroCore.Utils
             key = default;
             return false;
         }
-    }
+
+        public static Dictionary<string, T> AsCaseSafe<T>(this IAssetData data)
+        {
+            if (!data.DataType.IsAssignableTo(typeof(Dictionary<string, T>)))
+                throw new ArgumentException("Asset type mismatch");
+            return new(data.AsDictionary<string, T>().Data, StringComparer.OrdinalIgnoreCase);
+        }
+
+		public static Dictionary<string, T> LoadLocalDict<T>(this IModHelper helper, string path)
+		{
+			var data = helper.ModContent.Load<Dictionary<string, T>>(path);
+			return new(data, StringComparer.OrdinalIgnoreCase);
+		}
+	}
 }

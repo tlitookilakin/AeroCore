@@ -40,6 +40,7 @@ namespace AeroCore
 
             helper.Events.GameLoop.SaveLoaded += EnteredWorld;
             helper.Events.GameLoop.GameLaunched += Init;
+            helper.ConsoleCommands.Add("reload_location", "Force-reloads the current location", (s, a) => Utils.Maps.ReloadCurrentLocation(true));
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

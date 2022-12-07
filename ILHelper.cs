@@ -55,7 +55,7 @@ namespace AeroCore
         /// <param name="op2">Specified operand</param>
         public static bool CompareOperands(object op1, object op2)
         {
-            if (op2 == null || op2.Equals(op1))
+            if (op2 is null || op2.Equals(op1))
                 return true;
 
             if (op1 is sbyte sb && Convert.ToInt32(sb).Equals(op2))
@@ -460,7 +460,11 @@ namespace AeroCore
 
                     i++;
                     if (!CompareInstructions(source.Current, anchors[i - 1]))
+                    {
+                        if (i > 1 && owner.Debug)
+                            owner.monitor.Log("-------------------", LogLevel.Debug);
                         break;
+                    }
                     ret = i >= anchors.Count;
 
                     if (owner.Debug && i == 1)

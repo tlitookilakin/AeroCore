@@ -96,7 +96,7 @@ namespace AeroCore.Utils
                 int.TryParse(x2, out int bx) &&
                 int.TryParse(y2, out int by))
             {
-                rect = new(Math.Min(ax, bx), Math.Min(ax, bx), Math.Abs(ax - bx), Math.Abs(ay - by));
+                rect = new(Math.Min(ax, bx), Math.Min(ax, bx), Math.Abs(ax - bx + 1), Math.Abs(ay - by + 1));
                 return true;
             }
             rect = new();

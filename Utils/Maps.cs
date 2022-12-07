@@ -33,6 +33,28 @@ namespace AeroCore.Utils
 
         public static string[] MapPropertyArray(this GameLocation loc, string prop) => 
             loc.getMapProperty(prop).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        public static bool TryGetMapProperty(this GameLocation loc, string name, out string prop)
+        {
+            prop = string.Empty;
+            if (loc is null || loc.Map is null)
+                return false;
+            if (!loc.Map.Properties.TryGetValue(name, out var p))
+                return false;
+            prop = p.ToString();
+            return true;
+        }
+        public static bool TryGetMapPropertyArray(this GameLocation loc, string name, out string[] prop)
+        {
+            if(TryGetMapProperty(loc, name, out var p))
+            {
+                prop = p.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                return true;
+            }
+            prop = Array.Empty<string>();
+            return false;
+        }
+
         public static IEnumerable<(xTile.Tiles.Tile, int, int)> TilesInLayer(Layer layer)
         {
             if (layer == null)

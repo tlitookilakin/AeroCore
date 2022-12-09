@@ -64,6 +64,7 @@ namespace AeroCore.Patches
             .AddLabel("override")
             .Finish();
 
+        // TODO: Replace this shlock with newer ILHelper features
         private static IList<CodeInstruction> InjectCursor(ILHelper.ILEnumerator cursor)
         {
             var jump = cursor.CreateLabel("override");

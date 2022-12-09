@@ -99,7 +99,7 @@ namespace AeroCore.Particles
                     frames[i] = cframe;
                     regions[i] = CalculateRegion(cframe, variant[i]);
                 }
-                int ctime = mlife / (ColorLoops * colors.Length);
+                int ctime = mlife / (ColorLoops * colors.Length - 1);
                 int whichc = clife / ctime % colors.Length;
                 batch.Draw(
                     texture,

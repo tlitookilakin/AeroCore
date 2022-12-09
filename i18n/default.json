@@ -4,6 +4,7 @@
 	"misc.generic.previous": "Previous",
 	"misc.generic.next": "Next",
 	"misc.generic.cancel": "Cancel",
+	"misc.assetLoadFailed": "Failed to load game asset '{{Path}}': {{Msg}}",
 	"config.CursorLightIntensity.label": "Cursor light intensity",
 	"config.CursorLightIntensity.desc": "How bright the cursor light should be",
 	"config.CursorLightBind.label": "Cursor light key",

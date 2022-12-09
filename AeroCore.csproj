@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<AssemblyName>AeroCore</AssemblyName>
 		<RootNamespace>AeroCore</RootNamespace>
-		<Version>1.0.0</Version>
+		<Version>0.9.1</Version>
 		<TargetFramework>net5.0</TargetFramework>
 		<EnableHarmony>true</EnableHarmony>
 	</PropertyGroup>

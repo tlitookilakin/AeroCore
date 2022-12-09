@@ -145,14 +145,14 @@ namespace AeroCore.Utils
                 "";
             return prefix + index;
         }
-        public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset)
+        public static bool TryLoadAsset<T>(IMonitor mon, IModHelper helper, string path, out T asset, LogLevel level = LogLevel.Warn)
         {
             try
             {
                 asset = helper.GameContent.Load<T>(path);
             } catch(ContentLoadException e)
             {
-                mon.Log(ModEntry.i18n.Get("misc.assetLoadFailed", new { Path = path, Msg = e.Message }), LogLevel.Warn);
+                mon.Log(ModEntry.i18n.Get("misc.assetLoadFailed", new { Path = path, Msg = e.Message }), level);
                 asset = default;
                 return false;
             }

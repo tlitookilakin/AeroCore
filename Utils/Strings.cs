@@ -355,11 +355,11 @@ namespace AeroCore.Utils
                     }
                 } else
                 {
-                    if (int.TryParse(s[1..2], NumberStyles.HexNumber, null, out int r) &&
-                        int.TryParse(s[2..3], NumberStyles.HexNumber, null, out int g) &&
-                        int.TryParse(s[3..4], NumberStyles.HexNumber, null, out int b))
+                    if (int.TryParse($"{s[1]}{s[1]}", NumberStyles.HexNumber, null, out int r) &&
+                        int.TryParse($"{s[2]}{s[2]}", NumberStyles.HexNumber, null, out int g) &&
+                        int.TryParse($"{s[3]}{s[3]}", NumberStyles.HexNumber, null, out int b))
                     {
-                        if (s.Length > 4 && int.TryParse(s[4..5], NumberStyles.HexNumber, null, out int a))
+                        if (s.Length > 4 && int.TryParse($"{s[4]}{s[4]}", NumberStyles.HexNumber, null, out int a))
                             color = new(r, g, b, a);
                         else
                             color = new(r, g, b);

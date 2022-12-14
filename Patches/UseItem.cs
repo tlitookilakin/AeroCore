@@ -25,12 +25,12 @@ namespace AeroCore.Patches
         internal static void Init()
         {
             ModEntry.monitor.Log("Prefixing DoFunction on all Tools...");
-            var ToolTypes = Reflection.GetAllKnownTypes().Where(b => b.IsAssignableTo(typeof(Tool)));
-            foreach(var type in ToolTypes)
-                ModEntry.harmony.TryPatch(
-                    AccessTools.DeclaredMethod(type, "DoFunction"), 
-                    prefix: new(typeof(UseItem).MethodNamed(nameof(UseTool)))
-                );
+            var ToolTypes = Reflection.GetAllKnownTypes().Where(b => b.IsAssignableTo(typeof(Tool))).ToArray();
+            for(int i = 0; i < ToolTypes.Length; i++)
+				ModEntry.harmony.TryPatch(
+                    AccessTools.DeclaredMethod(ToolTypes[i], "DoFunction"),
+					prefix: new(typeof(UseItem).MethodNamed(nameof(UseTool)))
+				);
             ModEntry.monitor.Log("Tool Prefixing complete!");
         }
 

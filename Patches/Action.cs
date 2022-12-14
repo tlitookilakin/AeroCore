@@ -59,23 +59,19 @@ namespace AeroCore.Patches
                 new(OpCodes.Brtrue_S)
             })
             .Skip(4)
-            .Transform(InjectCursor)
+            .Add(new CodeInstruction[]
+            {
+				new(OpCodes.Ldsfld, typeof(Action).FieldNamed(nameof(CurrentActionCursor))),
+				new(OpCodes.Call, typeof(PerScreen<int>).MethodNamed("get_Value")),
+				new(OpCodes.Dup)
+			})
+            .AddJump(OpCodes.Brtrue, "override")
+            .Add(new CodeInstruction[]
+            {
+                new(OpCodes.Pop)
+            })
             .SkipTo(new CodeInstruction(OpCodes.Stsfld,typeof(Game1).FieldNamed("mouseCursor")))
             .AddLabel("override")
             .Finish();
-
-        // TODO: Replace this shlock with newer ILHelper features
-        private static IList<CodeInstruction> InjectCursor(ILHelper.ILEnumerator cursor)
-        {
-            var jump = cursor.CreateLabel("override");
-            return new CodeInstruction[]
-            {
-                new(OpCodes.Ldsfld, typeof(Action).FieldNamed(nameof(CurrentActionCursor))),
-                new(OpCodes.Call, typeof(PerScreen<int>).MethodNamed("get_Value")),
-                new(OpCodes.Dup),
-                new(OpCodes.Brtrue, jump),
-                new(OpCodes.Pop)
-            };
-        }
     }
 }

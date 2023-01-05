@@ -66,6 +66,22 @@ namespace AeroCore.Patches
             }
             return count;
         }
+        public static void DropAllWrapped(GameLocation where = null)
+        {
+            where ??= Game1.currentLocation;
+            if (where is null)
+                return;
+            var objs = where.Objects.Pairs;
+            int dir = where == Game1.currentLocation ? -1 : 2;
+            foreach ((Vector2 key, SObject val) in objs)
+            {
+                if (val.modData.ContainsKey(WrapFlag))
+                {
+                    Game1.createItemDebris(UnwrapItem(val), new(key.X * 64f + 32f, key.Y * 64f + 32f), dir, where);
+                    where.Objects.Remove(key);
+                }
+            }
+        }
 
         [HarmonyPatch(typeof(Sign), nameof(Sign.draw))]
         [HarmonyPrefix]
@@ -100,6 +116,7 @@ namespace AeroCore.Patches
 
         [HarmonyPatch(typeof(Sign), nameof(Sign.checkForAction))]
         [HarmonyPrefix]
+        [HarmonyPriority(Priority.High)]
         internal static bool ActionPatch(Sign __instance, Farmer who, bool justCheckingForActivity, ref bool __result)
         {
             if (!__instance.modData.ContainsKey(WrapFlag))

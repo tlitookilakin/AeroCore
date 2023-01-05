@@ -1,4 +1,5 @@
 ﻿using AeroCore.Integration;
+using AeroCore.Patches;
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -41,6 +42,9 @@ namespace AeroCore
             helper.Events.GameLoop.SaveLoaded += EnteredWorld;
             helper.Events.GameLoop.GameLaunched += Init;
             helper.ConsoleCommands.Add("reload_location", "Force-reloads the current location", (s, a) => Utils.Maps.ReloadCurrentLocation(true));
+            helper.ConsoleCommands.Add("unstuck_placed", "Force-breaks placed items in a location. If no location is specified, uses the current location.", 
+                (s, a) => ItemWrapper.DropAllWrapped(a.Length > 0 ? Game1.getLocationFromName(a[0]) : null)
+            );
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

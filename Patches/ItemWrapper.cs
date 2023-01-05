@@ -37,13 +37,13 @@ namespace AeroCore.Patches
             ModEntry.harmony.Patch(typeof(Utility).MethodNamed(nameof(Utility.canItemBeAddedToThisInventoryList)), prefix: itemSwap2);
         }
 
-        public static SObject WrapItem(Item what, bool forceSubtype = false)
+        public static SObject WrapItem(Item what, bool forceSubtype = false, bool forceall = false)
         {
             if (what is null || what.modData.ContainsKey(WrapFlag))
                 return null;
-            if (what is SObject obj && !forceSubtype)
+            if (what is SObject obj && !forceSubtype && !forceall)
                 return obj;
-            if (what.GetType() == typeof(SObject) && !(what as SObject).bigCraftable.Value)
+            if (!forceall && what.GetType() == typeof(SObject) && !(what as SObject).bigCraftable.Value)
                 return what as SObject;
             Sign ret = new(Vector2.Zero, 37); // wood sign
             ret.displayItem.Value = what;

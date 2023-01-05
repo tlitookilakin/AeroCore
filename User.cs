@@ -57,7 +57,7 @@ namespace AeroCore
             var held = Game1.player.CurrentItem;
             if (held is null)
                 return;
-            var place = ItemWrapper.WrapItem(held.getOne(), true);
+            var place = ItemWrapper.WrapItem(held.getOne(), true, true);
             if (tile != Game1.player.getTileLocation() && where.isTileLocationTotallyClearAndPlaceableIgnoreFloors(tile))
             {
                 where.Objects[tile] = place;

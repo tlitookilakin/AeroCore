@@ -27,7 +27,11 @@ namespace AeroCore.Utils
         private static void checkSkipFadeIn(int screen)
         {
             if (skipFade.Value)
-                Patches.FadeHooks.gameFade.Value.fadeToBlackAlpha = -1f;
+            {
+                var fade = Patches.FadeHooks.gameFade.Value;
+                if (fade is not null)
+                    fade.fadeToBlackAlpha = -1f;
+			}
             skipFade.Value = false;
         }
 

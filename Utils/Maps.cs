@@ -126,6 +126,9 @@ namespace AeroCore.Utils
             => QuickWarp(Game1.getLocationRequest(name, structure), x, y, facing);
         public static void ReloadCurrentLocation(bool quick = false)
         {
+            if (Game1.player is null)
+                return;
+
             var pos = Game1.player.getTileLocationPoint();
             var loc = Game1.player.currentLocation;
             var facing = Game1.player.FacingDirection;

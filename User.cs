@@ -2,6 +2,7 @@
 using AeroCore.Patches;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 
@@ -27,6 +28,9 @@ namespace AeroCore
             => tile = ev.NewPosition.Tile * tileSize + offset;
         private static void ButtonPressed(object _, ButtonPressedEventArgs ev)
         {
+            if (Game1.activeClickableMenu is not null || !Context.IsWorldReady)
+                return;
+
             if (ModEntry.Config.CursorLightBind.JustPressed())
                 isLightActive = ModEntry.Config.CursorLightHold || !isLightActive;
             if (ModEntry.Config.PlaceBind.JustPressed())

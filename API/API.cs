@@ -26,6 +26,7 @@ namespace AeroCore.API
         public event Action<GameLocation> LocationCleanup;
         public event Action<int> AfterFadeOut;
         public event Action<int> AfterFadeIn;
+        public event Action<SpriteBatch> OnDrawingWorld;
 
         public void RegisterAction(string name, IAeroCoreAPI.ActionHandler action, int cursor = 0)
         {
@@ -172,6 +173,7 @@ namespace AeroCore.API
             knownPartBehaviors.Add("simple", () => new SimpleBehavior());
             knownPartSkins.Add("simple", () => new SimpleSkin());
         }
+        internal void EmitWorldDraw(SpriteBatch batch) => OnDrawingWorld?.Invoke(batch);
         #endregion internals
     }
 }

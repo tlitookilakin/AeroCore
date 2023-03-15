@@ -1,5 +1,6 @@
 ﻿using AeroCore.Particles;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Newtonsoft.Json.Linq;
 using StardewModdingAPI;
 using StardewValley;
@@ -21,6 +22,7 @@ namespace AeroCore.API
         public event Action<GameLocation> LocationCleanup;
         public event Action<int> AfterFadeOut;
         public event Action<int> AfterFadeIn;
+        public event Action<SpriteBatch> OnDrawingWorld;
 
         /// <summary>Registers a custom action</summary>
         /// <param name="name">The name of the action</param>

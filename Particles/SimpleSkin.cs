@@ -34,8 +34,8 @@ namespace AeroCore.Particles
                 colors = cs.ToArray();
             }
         }
-        private Color[] colors = Array.Empty<Color>();
-        private string[] colNames = Array.Empty<string>();
+        private Color[] colors = { Color.White };
+        private string[] colNames = { "White" };
         public Rectangle Region { get; set; }
         public int Variants { get; set; } = 1;
         public int HorizontalVariants { get; set; } = 1;
@@ -47,6 +47,8 @@ namespace AeroCore.Particles
         public float MaxScale { get; set; } = 1f;
         public float MinSpin { get; set; } = 0f;
         public float MaxSpin { get; set; } = 0f;
+        public bool UseYDepth { get; set; } = false;
+        public float DepthOffset { get; set; } = 0f;
 
         private int[] variant;
         private float[] spin;
@@ -74,7 +76,7 @@ namespace AeroCore.Particles
 
         public void Draw(SpriteBatch batch, Vector2[] positions, int[] life, int[] maxLife, Vector2 scale, Vector2 offset = default, float depth = 0)
         {
-            if (texture is null || Variants < 1 || FrameCount < 1)
+            if (texture is null || Variants < 1 || FrameCount < 1 || colors.Length < 1)
                 return;
 
             for(int i = 0; i < positions.Length; i++)
@@ -87,19 +89,21 @@ namespace AeroCore.Particles
                 if (clife < 0) 
                 {
                     variant[i] = Game1.random.Next(0, Variants);
-                    spin[i] = (float)(Game1.random.NextDouble() * (MaxSpin - MinSpin) + MinSpin) / 1000f;
-                    scales[i] = (float)(Game1.random.NextDouble() * (MaxScale - MinScale) + MinScale);
+                    var max = MathF.Max(MaxSpin, MinSpin);
+                    spin[i] = (float)(Game1.random.NextDouble() * (max - MinSpin) + MinSpin) / 1000f;
+                    max = MathF.Max(MaxScale, MinScale);
+                    scales[i] = (float)(Game1.random.NextDouble() * (max - MinScale) + MinScale);
                     frames[i] = 0;
                     regions[i] = CalculateRegion(0, variant[i]);
                     clife = -clife;
                 }
-                var cframe = clife * FrameLoops * FrameCount / mlife % FrameCount;
+                var cframe = (FrameLoops >= 0 ? clife * (FrameLoops * FrameCount / mlife) : life[i] * -FrameLoops / 1000) % FrameCount;
                 if (cframe != frames[i])
                 {
                     frames[i] = cframe;
                     regions[i] = CalculateRegion(cframe, variant[i]);
                 }
-                int ctime = mlife / (ColorLoops * colors.Length - 1);
+                int ctime = mlife / Math.Max(ColorLoops * colors.Length - 1, 1);
                 int whichc = clife / ctime % colors.Length;
                 batch.Draw(
                     texture,
@@ -110,7 +114,7 @@ namespace AeroCore.Particles
                     origin,
                     scales[i] * scale,
                     SpriteEffects.None,
-                    depth
+                    (UseYDepth ? positions[i].Y * .0001f : depth) + DepthOffset
                     );
             }
         }

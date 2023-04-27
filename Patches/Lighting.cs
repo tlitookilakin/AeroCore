@@ -24,11 +24,12 @@ namespace AeroCore.Patches
             __state = Game1.drawLighting;
             Game1.drawLighting = Game1.hasLoadedGame;
         }
-        internal static void PostFix(bool __state)
+        internal static void Postfix(bool __state)
         {
             Game1.drawLighting = __state;
         }
-        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator gen) => patcher.Run(instructions, gen);
+        internal static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator gen)
+            => patcher.Run(instructions, gen);
 
         private static ILHelper patcher = new ILHelper(ModEntry.monitor, "Lighting")
             // skip to lighting phase
@@ -36,7 +37,7 @@ namespace AeroCore.Patches
                 new(OpCodes.Ldsfld, typeof(Game1).FieldNamed(nameof(Game1.drawLighting))),
                 new(OpCodes.Brfalse)
             })
-            // (outdoorLight) -> (outdoorLight == Color.White ? Color.Black : outdoorLight)
+            // fix dark outdoors
             .SkipTo(new CodeInstruction[]
             {
                 new(OpCodes.Ldsfld, typeof(Game1).FieldNamed(nameof(Game1.outdoorLight)))
@@ -44,22 +45,13 @@ namespace AeroCore.Patches
             .Skip(1)
             .Add(new CodeInstruction[]
             {
-                new(OpCodes.Dup),
-                new(OpCodes.Call, typeof(Color).PropertyGetter(nameof(Color.White))),
-                new(OpCodes.Callvirt, typeof(Color).MethodNamed(nameof(Color.Equals), new[] {typeof(Color)}))
-            })
-            .AddJump(OpCodes.Brfalse, "nofix")
-            .Add(new CodeInstruction[]
-            {
-                new(OpCodes.Pop),
-                new(OpCodes.Call, typeof(Color).PropertyGetter(nameof(Color.Black)))
-            })
-            .AddLabel("nofix")
+				new(OpCodes.Call, typeof(Lighting).MethodNamed(nameof(fix)))
+			})
             // skip to after bg lighting setup
             .SkipTo(new CodeInstruction[]
             {
-                new(OpCodes.Call, typeof(Game1).MethodNamed("get_lightmap")),
-                new(OpCodes.Callvirt, typeof(Texture2D).MethodNamed("get_Bounds"))
+                new(OpCodes.Call, typeof(Game1).PropertyGetter(nameof(Game1.lightmap))),
+                new(OpCodes.Callvirt, typeof(Texture2D).PropertyGetter(nameof(Texture2D.Bounds)))
             })
             .Skip(2)
             .Transform(InjectEvent)
@@ -67,7 +59,7 @@ namespace AeroCore.Patches
             // lighting offset (lights)
             .SkipTo(new CodeInstruction[]
             {
-                new(OpCodes.Ldfld, typeof(Options).FieldNamed("lightingQuality")),
+                new(OpCodes.Ldfld, typeof(Options).FieldNamed(nameof(Options.lightingQuality))),
                 new(OpCodes.Ldc_I4_2),
                 new(OpCodes.Div),
                 new(OpCodes.Conv_R4)
@@ -81,8 +73,8 @@ namespace AeroCore.Patches
             // lighting offset (lightmap)
             .SkipTo(new CodeInstruction[]
             {
-                new(OpCodes.Call,typeof(Game1).MethodNamed("get_lightmap")),
-                new(OpCodes.Call,typeof(Vector2).MethodNamed("get_Zero"))
+                new(OpCodes.Call,typeof(Game1).PropertyGetter(nameof(Game1.lightmap))),
+                new(OpCodes.Call,typeof(Vector2).PropertyGetter(nameof(Vector2.Zero)))
             })
             .Skip(1)
             .Remove(1)
@@ -114,5 +106,7 @@ namespace AeroCore.Patches
             // lighting subpixel offset
             v_offset = new(-offset.X / (float)pixsize, -offset.Y / (float)pixsize);
         }
+        private static Color fix(Color c)
+            => c == Color.White ? Color.Black : c;
     }
 }

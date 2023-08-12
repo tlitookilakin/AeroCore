@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.Xna.Framework.Graphics;
+using AeroCore.Utils;
 
 namespace AeroCore.Framework
 {
@@ -85,14 +86,14 @@ namespace AeroCore.Framework
 						else if (t == typeof(string))
 						{
 							gmcm.AddTextOption(who,
-								option.GetMethod.CreateDelegate<Func<string>>(config), option.SetMethod.CreateDelegate<Action<string>>(config),
+								option.GetMethod.CreateDelegateOld<Func<string>>(config), option.SetMethod.CreateDelegateOld<Action<string>>(config),
 								() => i18n.Get($"config.{option.Name}.label"), () => i18n.Get($"config.{option.Name}.desc")
 							);
 						}
 						else if (t == typeof(bool))
 						{
 							gmcm.AddBoolOption(who,
-								option.GetMethod.CreateDelegate<Func<bool>>(config), option.SetMethod.CreateDelegate<Action<bool>>(config),
+								option.GetMethod.CreateDelegateOld<Func<bool>>(config), option.SetMethod.CreateDelegateOld<Action<bool>>(config),
 								() => i18n.Get($"config.{option.Name}.label"), () => i18n.Get($"config.{option.Name}.desc")
 							);
 						}
@@ -100,7 +101,7 @@ namespace AeroCore.Framework
 						{
 							var range = option.GetCustomAttribute<GMCMRangeAttribute>();
 							gmcm.AddNumberOption(who,
-								option.GetMethod.CreateDelegate<Func<float>>(config), option.SetMethod.CreateDelegate<Action<float>>(config),
+								option.GetMethod.CreateDelegateOld<Func<float>>(config), option.SetMethod.CreateDelegateOld<Action<float>>(config),
 								() => i18n.Get($"config.{option.Name}.label"), () => i18n.Get($"config.{option.Name}.desc"),
 								range?.Min, range?.Max, option.GetCustomAttribute<GMCMIntervalAttribute>()?.Interval ?? .01f
 							);
@@ -109,7 +110,7 @@ namespace AeroCore.Framework
 						{
 							var range = option.GetCustomAttribute<GMCMRangeAttribute>();
 							gmcm.AddNumberOption(who,
-								option.GetMethod.CreateDelegate<Func<int>>(config), option.SetMethod.CreateDelegate<Action<int>>(config),
+								option.GetMethod.CreateDelegateOld<Func<int>>(config), option.SetMethod.CreateDelegateOld<Action<int>>(config),
 								() => i18n.Get($"config.{option.Name}.label"), () => i18n.Get($"config.{option.Name}.desc"),
 								(int?)(range?.Min), (int?)(range?.Max), (int?)(option.GetCustomAttribute<GMCMIntervalAttribute>()?.Interval) ?? 1
 							);
@@ -117,7 +118,7 @@ namespace AeroCore.Framework
 						else if (t == typeof(KeybindList))
 						{
 							gmcm.AddKeybindList(who,
-								option.GetMethod.CreateDelegate<Func<KeybindList>>(config), option.SetMethod.CreateDelegate<Action<KeybindList>>(config),
+								option.GetMethod.CreateDelegateOld<Func<KeybindList>>(config), option.SetMethod.CreateDelegateOld<Action<KeybindList>>(config),
 								() => i18n.Get($"config.{option.Name}.label"), () => i18n.Get($"config.{option.Name}.desc")
 							);
 						}
